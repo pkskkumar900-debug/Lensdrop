@@ -77,12 +77,12 @@ export function EventAdmin() {
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="flex-1">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{event.title}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white break-words flex-1 min-w-0">{event.title}</h1>
             <a 
               href={galleryUrl} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 px-4 py-2 rounded-lg transition-colors"
+              className="flex items-center justify-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 px-4 py-2 rounded-lg transition-colors shrink-0"
             >
               View Gallery <ExternalLink className="w-4 h-4" />
             </a>

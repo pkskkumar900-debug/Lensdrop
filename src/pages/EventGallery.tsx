@@ -130,10 +130,10 @@ export function EventGallery() {
       )}
 
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">{event.title} Gallery</h1>
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex-1 min-w-0">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2 break-words">{event.title} Gallery</h1>
           <p className="text-gray-500 dark:text-slate-400 flex items-center gap-2">
-            <Camera className="w-4 h-4" />
+            <Camera className="w-4 h-4 shrink-0" />
             {photos.length} {photos.length === 1 ? 'Photo' : 'Photos'}
           </p>
         </motion.div>
@@ -144,7 +144,7 @@ export function EventGallery() {
             animate={{ opacity: 1, x: 0 }}
             onClick={handleDownloadAll}
             disabled={downloadingAll}
-            className="bg-gray-900 dark:bg-white text-white dark:text-slate-900 px-6 py-3 rounded-full font-medium hover:bg-gray-800 dark:hover:bg-slate-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md"
+            className="bg-gray-900 dark:bg-white text-white dark:text-slate-900 px-6 py-3 rounded-xl sm:rounded-full font-medium hover:bg-gray-800 dark:hover:bg-slate-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-md shrink-0 w-full md:w-auto"
           >
             {downloadingAll ? (
               <>

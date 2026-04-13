@@ -46,7 +46,12 @@ export function Dashboard() {
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !newEventTitle.trim()) return;
+    if (!user) return;
+    
+    if (!newEventTitle.trim()) {
+      alert("Please enter an event name");
+      return;
+    }
 
     setIsCreating(true);
     try {
@@ -57,6 +62,7 @@ export function Dashboard() {
         createdAt: serverTimestamp(),
       });
       setNewEventTitle('');
+      alert("Event Created Successfully!");
       navigate(`/upload/${docRef.id}`);
     } catch (error) {
       console.error("Error creating event:", error);
@@ -82,7 +88,7 @@ export function Dashboard() {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="max-w-5xl mx-auto"
+      className="max-w-5xl mx-auto relative z-10"
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
@@ -94,20 +100,20 @@ export function Dashboard() {
           initial={{ opacity: 0, x: 20 }} 
           animate={{ opacity: 1, x: 0 }}
           onSubmit={handleCreateEvent} 
-          className="flex flex-col sm:flex-row gap-3 w-full md:w-auto mt-4 md:mt-0"
+          className="flex flex-col sm:flex-row gap-3 w-full md:w-auto mt-4 md:mt-0 relative z-50"
         >
           <input
+            id="newEventInput"
             type="text"
             placeholder="New Event Name (e.g. Smith Wedding)"
             value={newEventTitle}
             onChange={(e) => setNewEventTitle(e.target.value)}
-            className="px-4 py-3 sm:py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 text-gray-900 dark:text-white rounded-xl sm:rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none w-full sm:w-64 placeholder-gray-400 dark:placeholder-slate-500 shadow-sm"
-            required
+            className="px-4 py-3 sm:py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 text-gray-900 dark:text-white rounded-xl sm:rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none w-full sm:w-64 placeholder-gray-400 dark:placeholder-slate-500 shadow-sm relative z-50"
           />
           <button
             type="submit"
-            disabled={isCreating || !newEventTitle.trim()}
-            className="bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto shadow-sm"
+            disabled={isCreating}
+            className="bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto shadow-sm relative z-50 touch-manipulation"
           >
             {isCreating ? 'Creating...' : <><Plus className="w-5 h-5 sm:w-4 sm:h-4" /> Create</>}
           </button>
@@ -130,7 +136,13 @@ export function Dashboard() {
             <ImageIcon className="w-8 h-8" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">No events yet</h3>
-          <p className="text-gray-500 dark:text-slate-400">Create your first event to start uploading photos.</p>
+          <p className="text-gray-500 dark:text-slate-400 mb-6">Create your first event to start uploading and sharing memories</p>
+          <button 
+            onClick={() => document.getElementById('newEventInput')?.focus()}
+            className="inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-indigo-700 transition-colors shadow-sm"
+          >
+            <Plus className="w-5 h-5" /> Create Event
+          </button>
         </motion.div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -145,13 +157,13 @@ export function Dashboard() {
                 to={`/upload/${event.id}`}
                 className="group bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 hover:shadow-lg hover:shadow-indigo-500/5 hover:border-indigo-400 dark:hover:border-indigo-500/50 transition-all flex flex-col h-full"
               >
-                <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors break-words line-clamp-2">
                     {event.title}
                   </h3>
                   <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
-                    <Calendar className="w-4 h-4" />
-                    <span>
+                    <Calendar className="w-4 h-4 shrink-0" />
+                    <span className="truncate">
                       {event.createdAt?.toDate ? new Date(event.createdAt.toDate()).toLocaleDateString() : 'Just now'}
                     </span>
                   </div>

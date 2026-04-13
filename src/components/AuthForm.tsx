@@ -54,7 +54,8 @@ export function AuthForm({ mode }: AuthFormProps) {
     setError('');
     try {
       await loginWithGoogle();
-      navigate('/dashboard');
+      // Navigation will happen automatically via the AuthContext and Login/Signup components
+      // once the redirect returns and the user state is updated.
     } catch (err: any) {
       let errorMessage = 'Google sign-in failed. Please try again.';
       if (err.code === 'auth/popup-closed-by-user') {

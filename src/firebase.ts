@@ -4,7 +4,7 @@ import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCnAt8cj1OMsD4390663ApYS6wlYs-oPWY",
-  authDomain: "lensdrop-325dd.firebaseapp.com",
+  authDomain: "lensdrop.imprince.me",
   projectId: "lensdrop-325dd",
   storageBucket: "lensdrop-325dd.firebasestorage.app",
   messagingSenderId: "1002219967167",

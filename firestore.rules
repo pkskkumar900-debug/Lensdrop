@@ -1,0 +1,96 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: events
+    // Document ID: auto-generated
+    // Fields:
+    //   - photographerId: string (required) - UID of the creator
+    //   - title: string (required) - Event title
+    //   - date: timestamp (optional) - Event date
+    //   - createdAt: timestamp (required) - Creation time
+    //
+    // Collection: events/{eventId}/photos
+    // Document ID: auto-generated
+    // Fields:
+    //   - url: string (required) - Photo URL
+    //   - name: string (required) - File name
+    //   - size: number (required) - File size
+    //   - uploadedAt: timestamp (required) - Upload time
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEvent(data) {
+      return hasRequiredFields(['photographerId', 'title', 'createdAt']) &&
+             hasOnlyAllowedFields(['photographerId', 'title', 'date', 'createdAt']) &&
+             data.photographerId is string &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 100 &&
+             data.createdAt is timestamp &&
+             (!('date' in data) || data.date is timestamp);
+    }
+
+    function isValidPhoto(data) {
+      return hasRequiredFields(['url', 'name', 'size', 'uploadedAt']) &&
+             hasOnlyAllowedFields(['url', 'name', 'size', 'uploadedAt']) &&
+             data.url is string && data.url.size() < 1000 &&
+             data.name is string && data.name.size() < 200 &&
+             data.size is number && data.size > 0 &&
+             data.uploadedAt is timestamp;
+    }
+
+    match /events/{eventId} {
+      // Explicitly allowing public read as requested by the user for the Guest Gallery
+      allow read: if true;
+      
+      allow create: if isAuthenticated() && 
+                    isValidEvent(request.resource.data) && 
+                    request.resource.data.photographerId == request.auth.uid;
+                    
+      allow update: if isAuthenticated() && 
+                    isValidEvent(request.resource.data) && 
+                    resource.data.photographerId == request.auth.uid &&
+                    request.resource.data.photographerId == resource.data.photographerId &&
+                    request.resource.data.createdAt == resource.data.createdAt;
+                    
+      allow delete: if isAuthenticated() && resource.data.photographerId == request.auth.uid;
+
+      match /photos/{photoId} {
+        // Explicitly allowing public read as requested by the user for the Guest Gallery
+        allow read: if true;
+        
+        allow create: if isAuthenticated() && 
+                      isValidPhoto(request.resource.data) &&
+                      get(/databases/$(database)/documents/events/$(eventId)).data.photographerId == request.auth.uid;
+                      
+        allow update: if isAuthenticated() && 
+                      isValidPhoto(request.resource.data) &&
+                      get(/databases/$(database)/documents/events/$(eventId)).data.photographerId == request.auth.uid &&
+                      request.resource.data.uploadedAt == resource.data.uploadedAt;
+                      
+        allow delete: if isAuthenticated() && 
+                      get(/databases/$(database)/documents/events/$(eventId)).data.photographerId == request.auth.uid;
+      }
+    }
+  }
+}

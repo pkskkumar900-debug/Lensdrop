@@ -1,0 +1,69 @@
+{
+  "entities": {
+    "Event": {
+      "title": "Event",
+      "description": "A wedding or photography event",
+      "type": "object",
+      "properties": {
+        "photographerId": {
+          "type": "string",
+          "description": "UID of the photographer who created the event"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the event"
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date of the event"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["photographerId", "title", "createdAt"]
+    },
+    "Photo": {
+      "title": "Photo",
+      "description": "A photo uploaded to an event",
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "Download URL of the photo"
+        },
+        "name": {
+          "type": "string",
+          "description": "Original file name"
+        },
+        "size": {
+          "type": "number",
+          "description": "File size in bytes"
+        },
+        "uploadedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Upload timestamp"
+        }
+      },
+      "required": ["url", "name", "size", "uploadedAt"]
+    }
+  },
+  "firestore": {
+    "/events/{eventId}": {
+      "schema": {
+        "$ref": "#/entities/Event"
+      },
+      "description": "Stores event metadata"
+    },
+    "/events/{eventId}/photos/{photoId}": {
+      "schema": {
+        "$ref": "#/entities/Photo"
+      },
+      "description": "Stores photos for a specific event"
+    }
+  }
+}

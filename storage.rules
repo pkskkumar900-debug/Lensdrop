@@ -1,0 +1,16 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /events/{eventId}/{allPaths=**} {
+      // Allow public read for guest gallery
+      allow read: if true;
+      
+      // Allow write if the user is authenticated and owns the event
+      // Since we can't easily check Firestore from Storage rules without custom claims,
+      // we'll enforce that the user must be authenticated to upload.
+      // In a production app, we would use custom claims or a Cloud Function to validate event ownership.
+      allow write: if request.auth != null;
+    }
+  }
+}

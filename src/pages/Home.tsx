@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Camera, QrCode, Download, Zap, Sparkles, LayoutDashboard, Users, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
 import { motion, useMotionValue, useTransform, animate, useInView } from 'motion/react';
@@ -21,7 +21,7 @@ function AnimatedCounter({ from, to, suffix = "", duration = 2 }: { from: number
 }
 
 export function Home() {
-  const { user, loading, login } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) return null;
   if (user) return <Navigate to="/dashboard" replace />;
@@ -81,20 +81,20 @@ export function Home() {
         transition={{ duration: 0.5, delay: 0.3 }}
         className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto"
       >
-        <button
-          onClick={login}
+        <Link
+          to="/signup"
           className="w-full sm:w-auto bg-indigo-600 dark:bg-indigo-500 text-white px-8 py-4 rounded-full text-lg font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] hover:-translate-y-0.5 flex items-center justify-center gap-2"
         >
           <Sparkles className="w-5 h-5" />
           Create Event & Get QR
-        </button>
-        <button
-          onClick={login}
+        </Link>
+        <Link
+          to="/login"
           className="w-full sm:w-auto bg-white dark:bg-slate-800/80 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 px-8 py-4 rounded-full text-lg font-medium hover:bg-gray-50 dark:hover:bg-slate-700 transition-all shadow-sm hover:-translate-y-0.5 flex items-center justify-center gap-2 backdrop-blur-sm"
         >
           <LayoutDashboard className="w-5 h-5" />
           Photographer Dashboard
-        </button>
+        </Link>
       </motion.div>
 
       {/* Trust Section */}

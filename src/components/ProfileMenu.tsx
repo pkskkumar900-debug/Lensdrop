@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User } from 'firebase/auth';
+import { Link } from 'react-router-dom';
 import { 
   Settings, 
   Moon, 
@@ -9,14 +10,15 @@ import {
   FileText, 
   Code, 
   LogOut,
-  ChevronDown
+  ChevronDown,
+  ShieldAlert
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { SettingsModal, ModalView } from './SettingsModal';
 
 export function ProfileMenu() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [modalView, setModalView] = useState<ModalView>(null);
@@ -65,11 +67,24 @@ export function ProfileMenu() {
               className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-200 dark:border-slate-800 overflow-hidden z-50"
             >
               <div className="p-4 border-b border-gray-100 dark:border-slate-800">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user.displayName || 'Photographer'}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  {user.displayName || 'Photographer'}
+                  {isAdmin && <span className="ml-2 text-xs bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400 px-2 py-0.5 rounded-full">Admin</span>}
+                </p>
                 <p className="text-xs text-gray-500 dark:text-slate-400 truncate">{user.email}</p>
               </div>
 
               <div className="p-2 space-y-1">
+                {isAdmin && (
+                  <Link 
+                    to="/admin"
+                    onClick={() => setIsOpen(false)}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                  >
+                    <ShieldAlert className="w-4 h-4 text-purple-500" />
+                    Admin Dashboard
+                  </Link>
+                )}
                 <button 
                   onClick={toggleTheme}
                   className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"

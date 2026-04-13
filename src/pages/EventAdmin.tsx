@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { doc, getDoc, collection, query, orderBy, onSnapshot, deleteDoc } from 'firebase/firestore';
-import { ref, deleteObject } from 'firebase/storage';
-import { db, storage } from '../firebase';
+import { doc, onSnapshot, updateDoc, arrayRemove } from 'firebase/firestore';
+import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { QRGenerator } from '../components/QRGenerator';
 import { UploadZone } from '../components/UploadZone';
@@ -15,19 +14,16 @@ export function EventAdmin() {
   const navigate = useNavigate();
   
   const [event, setEvent] = useState<any>(null);
-  const [photos, setPhotos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user || !id) return;
 
-    const fetchEvent = async () => {
-      const docRef = doc(db, 'events', id);
-      const docSnap = await getDoc(docRef);
-      
+    const docRef = doc(db, 'events', id);
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        if (data.photographerId !== user.uid) {
+        if (data.createdBy !== user.uid) {
           navigate('/dashboard');
           return;
         }
@@ -35,36 +31,22 @@ export function EventAdmin() {
       } else {
         navigate('/dashboard');
       }
-    };
-
-    fetchEvent();
-
-    const q = query(
-      collection(db, `events/${id}/photos`),
-      orderBy('uploadedAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const photosData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setPhotos(photosData);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching event:", error);
       setLoading(false);
     });
 
     return unsubscribe;
   }, [id, user, navigate]);
 
-  const handleDeletePhoto = async (photoId: string, url: string) => {
-    if (!confirm('Are you sure you want to delete this photo?')) return;
+  const handleDeletePhoto = async (photo: any) => {
+    if (!confirm('Are you sure you want to remove this photo from the gallery?')) return;
     
     try {
-      await deleteDoc(doc(db, `events/${id}/photos`, photoId));
-      const urlObj = new URL(url);
-      const path = decodeURIComponent(urlObj.pathname.split('/o/')[1]);
-      const storageRef = ref(storage, path);
-      await deleteObject(storageRef);
+      await updateDoc(doc(db, 'events', id!), {
+        images: arrayRemove(photo)
+      });
     } catch (error) {
       console.error("Error deleting photo:", error);
     }
@@ -75,6 +57,7 @@ export function EventAdmin() {
   }
 
   const galleryUrl = `${window.location.origin}/event/${id}`;
+  const photos = event.images || [];
 
   return (
     <motion.div 
@@ -116,9 +99,9 @@ export function EventAdmin() {
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {photos.map((photo, index) => (
+                {photos.map((photo: any, index: number) => (
                   <motion.div 
-                    key={photo.id} 
+                    key={photo.public_id || index} 
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.05 }}
@@ -126,13 +109,13 @@ export function EventAdmin() {
                   >
                     <img 
                       src={photo.url} 
-                      alt={photo.name} 
+                      alt={photo.name || 'Event photo'} 
                       className="w-full h-full object-cover"
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-black/40 dark:bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <button
-                        onClick={() => handleDeletePhoto(photo.id, photo.url)}
+                        onClick={() => handleDeletePhoto(photo)}
                         className="bg-white dark:bg-slate-900/80 text-red-600 dark:text-red-400 p-3 rounded-full hover:bg-red-50 dark:hover:bg-red-500/20 hover:text-red-700 dark:hover:text-red-300 transition-colors backdrop-blur-sm"
                         title="Delete photo"
                       >

@@ -1,10 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { UploadCloud, X } from 'lucide-react';
+import { UploadCloud } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { storage, db } from '../firebase';
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { db } from '../firebase';
 
 interface UploadZoneProps {
   eventId: string;
@@ -31,25 +30,32 @@ export function UploadZone({ eventId }: UploadZoneProps) {
         };
         const compressedFile = await imageCompression(file, options);
         
-        const storageRef = ref(storage, `events/${eventId}/${Date.now()}_${file.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, compressedFile);
+        const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'demo';
+        const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'unsigned_preset';
         
-        await new Promise<void>((resolve, reject) => {
-          uploadTask.on('state_changed', 
-            (snapshot) => {}, 
-            (error) => reject(error), 
-            async () => {
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              
-              await addDoc(collection(db, `events/${eventId}/photos`), {
-                url: downloadURL,
-                name: file.name,
-                size: compressedFile.size,
-                uploadedAt: serverTimestamp()
-              });
-              resolve();
-            }
-          );
+        const formData = new FormData();
+        formData.append('file', compressedFile);
+        formData.append('upload_preset', uploadPreset);
+        
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!res.ok) {
+          throw new Error('Cloudinary upload failed');
+        }
+        
+        const data = await res.json();
+        
+        await updateDoc(doc(db, 'events', eventId), {
+          images: arrayUnion({
+            url: data.secure_url,
+            public_id: data.public_id,
+            name: file.name,
+            size: compressedFile.size,
+            uploadedAt: new Date().toISOString()
+          })
         });
         
         completed++;

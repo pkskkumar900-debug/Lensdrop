@@ -1,12 +1,25 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
-import { auth } from '../firebase';
+import { 
+  User, 
+  onAuthStateChanged, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signOut,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword
+} from 'firebase/auth';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: () => Promise<void>;
+  isAdmin: boolean;
+  loginWithGoogle: () => Promise<void>;
+  loginWithEmail: (email: string, pass: string) => Promise<void>;
+  signupWithEmail: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
+  login: () => Promise<void>; // Keep for backward compatibility
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -14,21 +27,70 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      
+      if (currentUser) {
+        const adminStatus = currentUser.email === 'pkskkumar900@gmail.com';
+        setIsAdmin(adminStatus);
+        
+        // Save user to Firestore
+        try {
+          const userRef = doc(db, 'users', currentUser.uid);
+          const userSnap = await getDoc(userRef);
+          
+          if (!userSnap.exists()) {
+            await setDoc(userRef, {
+              uid: currentUser.uid,
+              email: currentUser.email,
+              displayName: currentUser.displayName || '',
+              photoURL: currentUser.photoURL || '',
+              createdAt: serverTimestamp(),
+              role: adminStatus ? 'admin' : 'user'
+            });
+          } else if (adminStatus && userSnap.data().role !== 'admin') {
+            await setDoc(userRef, { role: 'admin' }, { merge: true });
+          }
+        } catch (error) {
+          console.error("Error saving user to Firestore:", error);
+        }
+      } else {
+        setIsAdmin(false);
+      }
+      
       setLoading(false);
     });
     return unsubscribe;
   }, []);
 
-  const login = async () => {
+  const loginWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
     } catch (error) {
-      console.error('Error signing in:', error);
+      console.error('Error signing in with Google:', error);
+      throw error;
+    }
+  };
+
+  const loginWithEmail = async (email: string, pass: string) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch (error) {
+      console.error('Error signing in with Email:', error);
+      throw error;
+    }
+  };
+
+  const signupWithEmail = async (email: string, pass: string) => {
+    try {
+      await createUserWithEmailAndPassword(auth, email, pass);
+    } catch (error) {
+      console.error('Error signing up with Email:', error);
+      throw error;
     }
   };
 
@@ -41,7 +103,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading,
+      isAdmin,
+      loginWithGoogle, 
+      loginWithEmail, 
+      signupWithEmail, 
+      logout,
+      login: loginWithGoogle 
+    }}>
       {children}
     </AuthContext.Provider>
   );

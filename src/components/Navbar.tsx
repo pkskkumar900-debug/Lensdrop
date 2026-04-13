@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ProfileMenu } from './ProfileMenu';
 
 export function Navbar() {
-  const { user, login } = useAuth();
+  const { user } = useAuth();
 
   return (
     <nav className="bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-800 sticky top-0 z-50 transition-colors duration-300">
@@ -28,12 +28,12 @@ export function Navbar() {
                 <ProfileMenu />
               </>
             ) : (
-              <button
-                onClick={login}
+              <Link
+                to="/login"
                 className="bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors shadow-sm"
               >
                 Photographer Login
-              </button>
+              </Link>
             )}
           </div>
         </div>

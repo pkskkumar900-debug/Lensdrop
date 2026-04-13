@@ -25,7 +25,7 @@ export function Dashboard() {
 
     const q = query(
       collection(db, 'events'),
-      where('photographerId', '==', user.uid),
+      where('createdBy', '==', user.uid),
       orderBy('createdAt', 'desc')
     );
 
@@ -51,12 +51,13 @@ export function Dashboard() {
     setIsCreating(true);
     try {
       const docRef = await addDoc(collection(db, 'events'), {
-        photographerId: user.uid,
+        createdBy: user.uid,
         title: newEventTitle.trim(),
+        images: [],
         createdAt: serverTimestamp(),
       });
       setNewEventTitle('');
-      navigate(`/admin/event/${docRef.id}`);
+      navigate(`/upload/${docRef.id}`);
     } catch (error) {
       console.error("Error creating event:", error);
       alert("Failed to create event. Please try again.");
@@ -133,7 +134,7 @@ export function Dashboard() {
               transition={{ delay: index * 0.05 }}
             >
               <Link 
-                to={`/admin/event/${event.id}`}
+                to={`/upload/${event.id}`}
                 className="group bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 hover:shadow-lg hover:shadow-indigo-500/5 hover:border-indigo-400 dark:hover:border-indigo-500/50 transition-all flex flex-col h-full"
               >
                 <div className="flex-1">

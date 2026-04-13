@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { doc, getDoc, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ImageGrid } from '../components/ImageGrid';
 import { Download, Camera, Loader2 } from 'lucide-react';
@@ -11,7 +11,6 @@ import { motion } from 'motion/react';
 export function EventGallery() {
   const { id } = useParams<{ id: string }>();
   const [event, setEvent] = useState<any>(null);
-  const [photos, setPhotos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingAll, setDownloadingAll] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
@@ -20,52 +19,40 @@ export function EventGallery() {
     if (!id) return;
 
     if (id === 'demo') {
-      setEvent({ id: 'demo', title: 'Sample Wedding Gallery', photographerId: 'demo' });
-      setPhotos([
-        { id: '1', url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80', name: 'wedding_1.jpg' },
-        { id: '2', url: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=800&q=80', name: 'wedding_2.jpg' },
-        { id: '3', url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80', name: 'wedding_3.jpg' },
-        { id: '4', url: 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=800&q=80', name: 'wedding_4.jpg' },
-        { id: '5', url: 'https://images.unsplash.com/photo-1532712938730-4e36c457b1c5?auto=format&fit=crop&w=800&q=80', name: 'wedding_5.jpg' },
-        { id: '6', url: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=800&q=80', name: 'wedding_6.jpg' },
-      ]);
+      setEvent({ 
+        id: 'demo', 
+        title: 'Sample Wedding Gallery', 
+        createdBy: 'demo',
+        images: [
+          { id: '1', url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80', name: 'wedding_1.jpg' },
+          { id: '2', url: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=800&q=80', name: 'wedding_2.jpg' },
+          { id: '3', url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80', name: 'wedding_3.jpg' },
+          { id: '4', url: 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=800&q=80', name: 'wedding_4.jpg' },
+          { id: '5', url: 'https://images.unsplash.com/photo-1532712938730-4e36c457b1c5?auto=format&fit=crop&w=800&q=80', name: 'wedding_5.jpg' },
+          { id: '6', url: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=800&q=80', name: 'wedding_6.jpg' },
+        ]
+      });
       setLoading(false);
       return;
     }
 
-    const fetchEvent = async () => {
-      try {
-        const docRef = doc(db, 'events', id);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          setEvent({ id: docSnap.id, ...docSnap.data() });
-        } else {
-          setEvent(null);
-        }
-      } catch (error) {
-        console.error("Error fetching event:", error);
+    const docRef = doc(db, 'events', id);
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setEvent({ id: docSnap.id, ...docSnap.data() });
+      } else {
+        setEvent(null);
       }
-    };
-
-    fetchEvent();
-
-    const q = query(
-      collection(db, `events/${id}/photos`),
-      orderBy('uploadedAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const photosData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setPhotos(photosData);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching event:", error);
       setLoading(false);
     });
 
     return unsubscribe;
   }, [id]);
+
+  const photos = event?.images || [];
 
   const handleDownloadAll = async () => {
     if (photos.length === 0) return;
@@ -77,11 +64,11 @@ export function EventGallery() {
       const zip = new JSZip();
       let count = 0;
       
-      const fetchPromises = photos.map(async (photo) => {
+      const fetchPromises = photos.map(async (photo: any) => {
         try {
           const response = await fetch(photo.url);
           const blob = await response.blob();
-          zip.file(photo.name, blob);
+          zip.file(photo.name || 'photo.jpg', blob);
           count++;
           setDownloadProgress(Math.round((count / photos.length) * 100));
         } catch (err) {

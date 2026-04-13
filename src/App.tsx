@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Github, Linkedin, Instagram, MessageCircle, Mail } from 'lucide-react';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
@@ -30,8 +31,25 @@ function AppContent() {
             </Routes>
           </main>
           
-          <footer className="w-full py-6 text-center text-sm text-gray-500 dark:text-slate-400 border-t border-gray-200 dark:border-slate-800/60 bg-white/50 dark:bg-slate-950/50 backdrop-blur-sm mt-auto">
-            <p>Copyright &copy; {new Date().getFullYear()} LensDrop. Developed by Prince.</p>
+          <footer className="w-full py-8 text-center text-gray-500 dark:text-slate-400 border-t border-gray-200 dark:border-slate-800/60 bg-white/50 dark:bg-slate-950/50 backdrop-blur-sm mt-auto">
+            <div className="flex justify-center gap-6 mb-4">
+              <a href="https://github.com/pkskkumar900-debug" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" aria-label="GitHub">
+                <Github className="w-5 h-5" />
+              </a>
+              <a href="https://www.linkedin.com/in/prince-raj-ba4b973b3?utm_source=share_via&utm_content=profile&utm_medium=member_android" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" aria-label="LinkedIn">
+                <Linkedin className="w-5 h-5" />
+              </a>
+              <a href="https://www.instagram.com/princerjjjjj?igsh=MWhnMHp1c3UyM2cwdA==" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" aria-label="Instagram">
+                <Instagram className="w-5 h-5" />
+              </a>
+              <a href="https://wa.me/918252995548" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" aria-label="WhatsApp">
+                <MessageCircle className="w-5 h-5" />
+              </a>
+              <a href="mailto:founder@imprince.me" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" aria-label="Email">
+                <Mail className="w-5 h-5" />
+              </a>
+            </div>
+            <p className="text-sm">Copyright &copy; {new Date().getFullYear()} LensDrop. Developed by Prince.</p>
           </footer>
         </div>
       </div>

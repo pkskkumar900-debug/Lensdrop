@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ImageGrid } from '../components/ImageGrid';
+import { DigitalInvite } from '../components/DigitalInvite';
 import { Download, Camera, Loader2 } from 'lucide-react';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -10,6 +11,9 @@ import { motion } from 'motion/react';
 
 export function EventGallery() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const showInvite = searchParams.get('invite') === 'true';
+  
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [downloadingAll, setDownloadingAll] = useState(false);
@@ -121,9 +125,13 @@ export function EventGallery() {
       animate={{ opacity: 1 }}
       className="max-w-7xl mx-auto"
     >
+      {(showInvite || event.invite) && event.invite && (
+        <DigitalInvite title={event.title} invite={event.invite} />
+      )}
+
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">{event.title}</h1>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">{event.title} Gallery</h1>
           <p className="text-gray-500 dark:text-slate-400 flex items-center gap-2">
             <Camera className="w-4 h-4" />
             {photos.length} {photos.length === 1 ? 'Photo' : 'Photos'}

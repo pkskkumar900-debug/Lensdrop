@@ -94,22 +94,22 @@ export function Dashboard() {
           initial={{ opacity: 0, x: 20 }} 
           animate={{ opacity: 1, x: 0 }}
           onSubmit={handleCreateEvent} 
-          className="flex gap-2"
+          className="flex flex-col sm:flex-row gap-3 w-full md:w-auto mt-4 md:mt-0"
         >
           <input
             type="text"
             placeholder="New Event Name (e.g. Smith Wedding)"
             value={newEventTitle}
             onChange={(e) => setNewEventTitle(e.target.value)}
-            className="px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none w-full md:w-64 placeholder-gray-400 dark:placeholder-slate-500"
+            className="px-4 py-3 sm:py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 text-gray-900 dark:text-white rounded-xl sm:rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none w-full sm:w-64 placeholder-gray-400 dark:placeholder-slate-500 shadow-sm"
             required
           />
           <button
             type="submit"
             disabled={isCreating || !newEventTitle.trim()}
-            className="bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors disabled:opacity-50 flex items-center gap-2 whitespace-nowrap"
+            className="bg-indigo-600 dark:bg-indigo-500 text-white px-6 py-3 sm:py-2 rounded-xl sm:rounded-lg font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto shadow-sm"
           >
-            {isCreating ? 'Creating...' : <><Plus className="w-4 h-4" /> Create</>}
+            {isCreating ? 'Creating...' : <><Plus className="w-5 h-5 sm:w-4 sm:h-4" /> Create</>}
           </button>
         </motion.form>
       </div>

@@ -54,9 +54,9 @@ export function AuthForm({ mode }: AuthFormProps) {
     setError('');
     try {
       await loginWithGoogle();
-      // Navigation will happen automatically via the AuthContext and Login/Signup components
-      // once the redirect returns and the user state is updated.
+      navigate('/dashboard');
     } catch (err: any) {
+      console.error("Google Auth Error:", err);
       let errorMessage = 'Google sign-in failed. Please try again.';
       if (err.code === 'auth/popup-closed-by-user') {
         errorMessage = 'Sign-in popup was closed before completing.';
@@ -64,6 +64,10 @@ export function AuthForm({ mode }: AuthFormProps) {
         errorMessage = 'Sign-in popup was blocked by your browser. Please allow popups for this site.';
       } else if (err.code === 'auth/operation-not-allowed') {
         errorMessage = 'Google sign-in is not enabled. Please enable it in your Firebase Console > Authentication > Sign-in method.';
+      } else if (err.code === 'auth/unauthorized-domain') {
+        errorMessage = 'This domain is not authorized for OAuth operations. Please add it in the Firebase Console.';
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       setError(errorMessage);
     }

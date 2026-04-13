@@ -13,7 +13,7 @@ interface Event {
 }
 
 export function Dashboard() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +65,14 @@ export function Dashboard() {
       setIsCreating(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   if (!user) {
     return <div className="text-center py-12 text-gray-500 dark:text-slate-400">Please log in to view your dashboard.</div>;

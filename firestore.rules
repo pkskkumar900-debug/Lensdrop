@@ -59,6 +59,13 @@ service cloud.firestore {
              data.uploadedAt is timestamp;
     }
 
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
     match /events/{eventId} {
       // Explicitly allowing public read as requested by the user for the Guest Gallery
       allow read: if true;

@@ -39,6 +39,8 @@ export function AuthForm({ mode }: AuthFormProps) {
         errorMessage = 'Password should be at least 6 characters.';
       } else if (err.code === 'auth/invalid-email') {
         errorMessage = 'Please enter a valid email address.';
+      } else if (err.code === 'auth/operation-not-allowed') {
+        errorMessage = 'Email/Password sign-in is not enabled. Please enable it in your Firebase Console > Authentication > Sign-in method.';
       } else if (err.message) {
         errorMessage = err.message;
       }
@@ -59,6 +61,8 @@ export function AuthForm({ mode }: AuthFormProps) {
         errorMessage = 'Sign-in popup was closed before completing.';
       } else if (err.code === 'auth/popup-blocked') {
         errorMessage = 'Sign-in popup was blocked by your browser. Please allow popups for this site.';
+      } else if (err.code === 'auth/operation-not-allowed') {
+        errorMessage = 'Google sign-in is not enabled. Please enable it in your Firebase Console > Authentication > Sign-in method.';
       }
       setError(errorMessage);
     }

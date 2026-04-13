@@ -32,7 +32,7 @@ export function Navbar() {
                 to="/login"
                 className="bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors shadow-sm"
               >
-                Photographer Login
+                Signup / Login
               </Link>
             )}
           </div>

@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { QRGenerator } from '../components/QRGenerator';
 import { UploadZone } from '../components/UploadZone';
 import { InvitationGenerator } from '../components/InvitationGenerator';
-import { ArrowLeft, Trash2, ExternalLink, Image as ImageIcon, MailOpen, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Trash2, ExternalLink, Image as ImageIcon, MailOpen, CircleCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export function EventAdmin() {
@@ -167,7 +167,7 @@ export function EventAdmin() {
               }}
               className="bg-indigo-600 dark:bg-indigo-500 text-white px-8 py-3 rounded-xl font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors flex items-center gap-2 shadow-sm"
             >
-              <CheckCircle2 className="w-5 h-5" />
+              <CircleCheck className="w-5 h-5" />
               Save & Finish
             </button>
           </div>

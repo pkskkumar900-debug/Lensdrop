@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { motion } from 'motion/react';
-import { Save, Share2, Copy, CheckCircle2, Calendar, MapPin, Clock, Edit3 } from 'lucide-react';
+import { Save, Share2, Copy, CircleCheck, Calendar, MapPin, Clock, Edit3 } from 'lucide-react';
 
 interface InvitationGeneratorProps {
   eventId: string;
@@ -166,7 +166,7 @@ export function InvitationGenerator({ eventId, eventTitle, initialData }: Invita
               className="sm:w-auto bg-white dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 px-4 py-3 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2"
               title="Copy Link"
             >
-              {copied ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
+              {copied ? <CircleCheck className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
             </button>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Github, Linkedin, Instagram, MessageCircle, Mail } from 'lucide-react';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
@@ -28,6 +28,7 @@ function AppContent() {
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/upload/:id" element={<EventAdmin />} />
               <Route path="/event/:id" element={<EventGallery />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
           

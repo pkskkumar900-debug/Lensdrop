@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Camera, QrCode, Download, Zap, Sparkles, LayoutDashboard, Users, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
+import { Camera, QrCode, Download, Zap, Sparkles, LayoutDashboard, Users, Image as ImageIcon, CircleCheck } from 'lucide-react';
 import { motion, useMotionValue, useTransform, animate, useInView } from 'motion/react';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -169,15 +169,15 @@ export function Home() {
             className="space-y-4 text-gray-700 dark:text-slate-300"
           >
             <motion.li variants={listItemVariants} className="flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-indigo-500 shrink-0" /> 
+              <CircleCheck className="w-5 h-5 text-indigo-500 shrink-0" /> 
               <span>No app download required for guests</span>
             </motion.li>
             <motion.li variants={listItemVariants} className="flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-indigo-500 shrink-0" /> 
+              <CircleCheck className="w-5 h-5 text-indigo-500 shrink-0" /> 
               <span>Instant high-resolution downloads</span>
             </motion.li>
             <motion.li variants={listItemVariants} className="flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-indigo-500 shrink-0" /> 
+              <CircleCheck className="w-5 h-5 text-indigo-500 shrink-0" /> 
               <span>Beautiful mobile-first masonry grid</span>
             </motion.li>
           </motion.ul>

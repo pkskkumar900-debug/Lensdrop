@@ -1,5 +1,5 @@
 import { QRCodeSVG } from 'qrcode.react';
-import { Download, Share2, CheckCircle2 } from 'lucide-react';
+import { Download, Share2, CircleCheck } from 'lucide-react';
 import { useState } from 'react';
 
 interface QRGeneratorProps {
@@ -78,7 +78,7 @@ export function QRGenerator({ url, title }: QRGeneratorProps) {
           onClick={handleShare}
           className="w-full flex items-center justify-center gap-2 bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 px-4 py-2.5 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors shadow-sm"
         >
-          {copied ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Share2 className="w-4 h-4" />}
+          {copied ? <CircleCheck className="w-4 h-4 text-green-500" /> : <Share2 className="w-4 h-4" />}
           {copied ? 'Link Copied!' : 'Share Link'}
         </button>
       </div>

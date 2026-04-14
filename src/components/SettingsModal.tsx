@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Shield, FileText, Code, Lock, Mail, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, Shield, FileText, Code, Lock, Mail, CircleCheck, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../contexts/AuthContext';
 import { updatePassword } from 'firebase/auth';
@@ -81,7 +81,7 @@ export function SettingsModal({ view, onClose }: SettingsModalProps) {
                   
                   {message && (
                     <div className={`p-3 rounded-lg flex items-center gap-2 text-sm ${message.type === 'success' ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400' : 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400'}`}>
-                      {message.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                      {message.type === 'success' ? <CircleCheck className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
                       {message.text}
                     </div>
                   )}

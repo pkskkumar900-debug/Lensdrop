@@ -8,6 +8,7 @@ import { Download, Camera, Loader2 } from 'lucide-react';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { motion } from 'motion/react';
+import { notify } from '../lib/toast';
 
 export function EventGallery() {
   const { id } = useParams<{ id: string }>();
@@ -84,10 +85,11 @@ export function EventGallery() {
       
       const content = await zip.generateAsync({ type: 'blob' });
       saveAs(content, `${event.title.replace(/\s+/g, '_')}_Photos.zip`);
+      notify.success("Download started!");
       
     } catch (error) {
       console.error("Error creating zip:", error);
-      alert("Failed to download all photos. Please try again or download individually.");
+      notify.error("Failed to download all photos. Please try again or download individually.");
     } finally {
       setDownloadingAll(false);
       setDownloadProgress(0);
@@ -96,9 +98,19 @@ export function EventGallery() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-10 h-10 text-indigo-600 dark:text-indigo-500 animate-spin mb-4" />
-        <p className="text-gray-500 dark:text-slate-400">Loading gallery...</p>
+      <div className="max-w-7xl mx-auto w-full">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          <div className="flex-1 min-w-0 space-y-4">
+            <div className="h-10 w-3/4 md:w-1/2 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+            <div className="h-5 w-1/4 bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse"></div>
+          </div>
+          <div className="h-12 w-full md:w-48 bg-slate-200 dark:bg-slate-800 rounded-xl sm:rounded-full animate-pulse shrink-0"></div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+            <div key={i} className="aspect-square bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse"></div>
+          ))}
+        </div>
       </div>
     );
   }

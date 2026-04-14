@@ -3,6 +3,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { motion } from 'motion/react';
 import { Save, Share2, Copy, CircleCheck, Calendar, MapPin, Clock, Edit3 } from 'lucide-react';
+import { notify } from '../lib/toast';
 
 interface InvitationGeneratorProps {
   eventId: string;
@@ -42,10 +43,10 @@ export function InvitationGenerator({ eventId, eventTitle, initialData }: Invita
       await updateDoc(doc(db, 'events', eventId), {
         invite: formData
       });
-      alert('Invitation saved successfully!');
+      notify.success('Invitation saved successfully!');
     } catch (error) {
       console.error("Error saving invite:", error);
-      alert('Failed to save invitation.');
+      notify.error('Failed to save invitation.');
     } finally {
       setSaving(false);
     }
@@ -147,27 +148,29 @@ export function InvitationGenerator({ eventId, eventTitle, initialData }: Invita
             />
           </div>
 
-          <div className="pt-4 border-t border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row gap-3">
+          <div className="pt-4 border-t border-gray-100 dark:border-slate-800 flex flex-col gap-3">
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-3 rounded-xl font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+              className="w-full bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-3 rounded-xl font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-70 shadow-sm"
             >
               <Save className="w-5 h-5" /> {saving ? 'Saving...' : 'Save Invitation'}
             </button>
-            <button
-              onClick={handleShare}
-              className="flex-1 bg-white dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 px-4 py-3 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2"
-            >
-              <Share2 className="w-5 h-5" /> Share
-            </button>
-            <button
-              onClick={handleCopyLink}
-              className="sm:w-auto bg-white dark:bg-slate-800 text-gray-900 dark:text-white border border-gray-200 dark:border-slate-700 px-4 py-3 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2"
-              title="Copy Link"
-            >
-              {copied ? <CircleCheck className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={handleShare}
+                className="flex-1 bg-transparent text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 px-4 py-3 rounded-xl font-medium hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors flex items-center justify-center gap-2"
+              >
+                <Share2 className="w-5 h-5" /> Share
+              </button>
+              <button
+                onClick={handleCopyLink}
+                className="flex-1 bg-transparent text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 px-4 py-3 rounded-xl font-medium hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors flex items-center justify-center gap-2"
+                title="Copy Link"
+              >
+                {copied ? <CircleCheck className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />} Copy Link
+              </button>
+            </div>
           </div>
         </div>
       </div>

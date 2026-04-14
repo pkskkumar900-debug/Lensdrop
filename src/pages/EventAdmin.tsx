@@ -6,8 +6,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { QRGenerator } from '../components/QRGenerator';
 import { UploadZone } from '../components/UploadZone';
 import { InvitationGenerator } from '../components/InvitationGenerator';
-import { ArrowLeft, Trash2, ExternalLink, Image as ImageIcon, MailOpen, CircleCheck } from 'lucide-react';
+import { ArrowLeft, Trash2, ExternalLink, Image as ImageIcon, MailOpen, CircleCheck, X } from 'lucide-react';
 import { motion } from 'motion/react';
+import { notify } from '../lib/toast';
+import { Loader } from '../components/Loader';
 
 export function EventAdmin() {
   const { id } = useParams<{ id: string }>();
@@ -55,7 +57,7 @@ export function EventAdmin() {
   };
 
   if (loading || !event) {
-    return <div className="text-center py-12 text-gray-500 dark:text-slate-400">Loading event details...</div>;
+    return <Loader />;
   }
 
   const galleryUrl = `${window.location.origin}/event/${id}`;
@@ -140,13 +142,13 @@ export function EventAdmin() {
                           className="w-full h-full object-cover"
                           loading="lazy"
                         />
-                        <div className="absolute inset-0 bg-black/40 dark:bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => handleDeletePhoto(photo)}
-                            className="bg-white dark:bg-slate-900/80 text-red-600 dark:text-red-400 p-3 rounded-full hover:bg-red-50 dark:hover:bg-red-500/20 hover:text-red-700 dark:hover:text-red-300 transition-colors backdrop-blur-sm"
+                            className="bg-black/50 text-white p-1.5 rounded-full hover:bg-red-500/80 transition-colors backdrop-blur-sm"
                             title="Delete photo"
                           >
-                            <Trash2 className="w-5 h-5" />
+                            <X className="w-4 h-4" />
                           </button>
                         </div>
                       </motion.div>
@@ -162,7 +164,7 @@ export function EventAdmin() {
           <div className="mt-12 pt-8 border-t border-gray-200 dark:border-slate-800 flex justify-end">
             <button
               onClick={() => {
-                alert('Event details saved successfully!');
+                notify.success('Event details saved successfully!');
                 navigate('/dashboard');
               }}
               className="bg-indigo-600 dark:bg-indigo-500 text-white px-8 py-3 rounded-xl font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors flex items-center gap-2 shadow-sm"

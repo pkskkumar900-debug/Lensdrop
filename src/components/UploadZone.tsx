@@ -4,6 +4,7 @@ import { UploadCloud } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../firebase';
+import { notify } from '../lib/toast';
 
 interface UploadZoneProps {
   eventId: string;
@@ -80,12 +81,13 @@ export function UploadZone({ eventId }: UploadZoneProps) {
         setProgress(Math.round((completed / acceptedFiles.length) * 100));
       } catch (error) {
         console.error("Error uploading file:", file.name, error);
-        alert(`Failed to upload ${file.name}. Please try again.`);
+        notify.error(`Failed to upload ${file.name}. Please try again.`);
       }
     }
     
     setUploading(false);
     setProgress(0);
+    notify.success("Upload complete!");
   }, [eventId]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
@@ -101,8 +103,8 @@ export function UploadZone({ eventId }: UploadZoneProps) {
     <div className="mb-8 relative z-10">
       <div 
         {...getRootProps()} 
-        className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-colors relative z-20 pointer-events-auto
-          ${isDragActive ? 'border-indigo-500 bg-indigo-500/10' : 'border-gray-300 dark:border-slate-700 hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-slate-800/50'}
+        className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all duration-300 relative z-20 pointer-events-auto
+          ${isDragActive ? 'border-indigo-500 bg-indigo-500/10 shadow-[0_0_30px_rgba(79,70,229,0.2)] scale-[1.02]' : 'border-gray-300 dark:border-slate-700 hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-slate-800/50'}
           ${uploading ? 'pointer-events-none opacity-50' : ''}
         `}
       >

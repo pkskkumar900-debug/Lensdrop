@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Users, Calendar, Image as ImageIcon, Search } from 'lucide-react';
 import { motion } from 'motion/react';
+import { notify } from '../lib/toast';
+import { Loader } from '../components/Loader';
 import { StatsCard } from '../components/admin/StatsCard';
 import { UsersTable } from '../components/admin/UsersTable';
 import { EventsTable } from '../components/admin/EventsTable';
@@ -62,7 +64,7 @@ export function AdminDashboard() {
       await deleteDoc(doc(db, 'events', id));
     } catch (error) {
       console.error("Error deleting event:", error);
-      alert("Failed to delete event.");
+      notify.error("Failed to delete event.");
     }
   };
 
@@ -73,7 +75,7 @@ export function AdminDashboard() {
       setUsers(users.filter(u => u.uid !== uid));
     } catch (error) {
       console.error("Error deleting user:", error);
-      alert("Failed to delete user.");
+      notify.error("Failed to delete user.");
     }
   };
 
@@ -85,7 +87,7 @@ export function AdminDashboard() {
       });
     } catch (error) {
       console.error("Error deleting image:", error);
-      alert("Failed to delete image.");
+      notify.error("Failed to delete image.");
     }
   };
 
@@ -135,7 +137,7 @@ export function AdminDashboard() {
     );
   }, [allImages, searchQuery]);
 
-  if (authLoading) return null;
+  if (authLoading) return <Loader />;
   if (!user || !isAdmin) return <Navigate to="/" replace />;
 
   return (

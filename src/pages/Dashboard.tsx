@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Image as ImageIcon, Calendar, ChevronRight, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface Event {
   id: string;
@@ -235,19 +236,28 @@ export function Dashboard() {
                 to={`/upload/${event.id}`}
                 className="group bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 hover:shadow-lg hover:shadow-indigo-500/5 hover:border-indigo-400 dark:hover:border-indigo-500/50 transition-all flex flex-col h-full"
               >
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors break-words line-clamp-2">
-                    {event.title}
-                  </h3>
-                  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
-                    <Calendar className="w-4 h-4 shrink-0" />
-                    <span className="truncate">
-                      {event.createdAt?.toDate ? new Date(event.createdAt.toDate()).toLocaleDateString() : 'Just now'}
-                    </span>
+                <div className="flex justify-between items-start gap-4 flex-1">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors break-words line-clamp-2">
+                      {event.title}
+                    </h3>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
+                      <Calendar className="w-4 h-4 shrink-0" />
+                      <span className="truncate">
+                        {event.createdAt?.toDate ? new Date(event.createdAt.toDate()).toLocaleDateString() : 'Just now'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="shrink-0 bg-white p-2 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm group-hover:border-indigo-200 transition-colors">
+                    <QRCodeSVG 
+                      value={`${window.location.origin}/event/${event.id}`} 
+                      size={60} 
+                      level="L" 
+                    />
                   </div>
                 </div>
                 <div className="mt-6 pt-4 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between text-indigo-600 dark:text-indigo-400 font-medium text-sm">
-                  <span>Manage Gallery</span>
+                  <span>Manage Gallery & QR</span>
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
               </Link>

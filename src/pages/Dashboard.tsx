@@ -3,11 +3,12 @@ import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp 
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Image as ImageIcon, Calendar, ChevronRight, Sparkles, Download } from 'lucide-react';
+import { Plus, Image as ImageIcon, Calendar, ChevronRight, Sparkles, Download, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { QRCodeSVG } from 'qrcode.react';
 import { notify } from '../lib/toast';
 import { Loader } from '../components/Loader';
+import { DeleteConfirmationModal } from '../components/DeleteConfirmationModal';
 
 interface Event {
   id: string;
@@ -23,6 +24,7 @@ export function Dashboard() {
   const [isCreating, setIsCreating] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState('');
   const [isMounted, setIsMounted] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -56,6 +58,29 @@ export function Dashboard() {
     };
     
     img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+  };
+
+  const confirmDeleteEvent = () => {
+    if (!eventToDelete) return;
+    
+    // Remove from React state
+    const updatedEvents = events.filter(e => e.id !== eventToDelete);
+    setEvents(updatedEvents);
+    
+    // Remove from localStorage
+    const savedEvents = localStorage.getItem('lensdrop_events');
+    if (savedEvents) {
+      try {
+        const parsedEvents = JSON.parse(savedEvents);
+        const newSavedEvents = parsedEvents.filter((e: any) => e.id !== eventToDelete);
+        localStorage.setItem('lensdrop_events', JSON.stringify(newSavedEvents));
+      } catch (e) {
+        console.error('Failed to update local storage on delete', e);
+      }
+    }
+    
+    notify.success("Event deleted successfully");
+    setEventToDelete(null);
   };
 
   useEffect(() => {
@@ -288,10 +313,22 @@ export function Dashboard() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
+                  className="relative"
                 >
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setEventToDelete(event.id);
+                    }}
+                    className="absolute top-4 right-4 z-20 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-full transition-all group/delete"
+                    title="Delete Event"
+                  >
+                    <Trash2 className="w-5 h-5 group-hover/delete:drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                  </button>
                   <Link 
                     to={`/upload/${event.id}`}
-                    className="group bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 hover:shadow-lg hover:shadow-indigo-500/5 hover:border-indigo-400 dark:hover:border-indigo-500/50 transition-all flex flex-col h-full items-center text-center"
+                    className="group bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 hover:shadow-lg hover:shadow-indigo-500/5 hover:border-indigo-400 dark:hover:border-indigo-500/50 transition-all flex flex-col h-full items-center text-center relative z-10"
                   >
                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors break-words line-clamp-2 w-full">
                       {event.title}
@@ -330,6 +367,12 @@ export function Dashboard() {
             </div>
         )}
       </div>
+      
+      <DeleteConfirmationModal 
+        isOpen={!!eventToDelete}
+        onClose={() => setEventToDelete(null)}
+        onConfirm={confirmDeleteEvent}
+      />
     </motion.div>
   );
 }

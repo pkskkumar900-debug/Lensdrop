@@ -22,6 +22,11 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleDownloadQR = (e: React.MouseEvent, eventId: string, eventTitle: string) => {
     e.preventDefault();
@@ -56,25 +61,18 @@ export function Dashboard() {
   useEffect(() => {
     if (!user) return;
 
-    const q = query(
-      collection(db, 'events'),
-      where('createdBy', '==', user.uid),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const eventsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Event[];
-      setEvents(eventsData);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching events:", error);
-      setLoading(false);
-    });
-
-    return unsubscribe;
+    const savedEvents = localStorage.getItem('lensdrop_events');
+    if (savedEvents) {
+      try {
+        const parsedEvents = JSON.parse(savedEvents);
+        // Filter events for current user if needed, or just load them
+        const userEvents = parsedEvents.filter((e: any) => e.createdBy === user.uid);
+        setEvents(userEvents);
+      } catch (e) {
+        console.error('Failed to parse events from localStorage', e);
+      }
+    }
+    setLoading(false);
   }, [user]);
 
   const handleCreateEvent = async (e: React.FormEvent) => {
@@ -88,15 +86,24 @@ export function Dashboard() {
 
     setIsCreating(true);
     try {
-      const docRef = await addDoc(collection(db, 'events'), {
-        createdBy: user.uid,
+      const newEvent = {
+        id: Date.now().toString(),
         title: newEventTitle.trim(),
-        images: [],
-        createdAt: serverTimestamp(),
-      });
+        createdAt: new Date().toISOString(),
+        createdBy: user.uid,
+        images: []
+      };
+
+      const updatedEvents = [newEvent, ...events];
+      setEvents(updatedEvents);
+      
+      // Get all events to preserve other users' events if any
+      const allSavedEvents = JSON.parse(localStorage.getItem('lensdrop_events') || '[]');
+      localStorage.setItem('lensdrop_events', JSON.stringify([newEvent, ...allSavedEvents]));
+
       setNewEventTitle('');
       notify.success("Event Created Successfully!");
-      navigate(`/upload/${docRef.id}`);
+      navigate(`/upload/${newEvent.id}`);
     } catch (error) {
       console.error("Error creating event:", error);
       notify.error("Failed to create event. Please try again.");
@@ -147,14 +154,22 @@ export function Dashboard() {
         }
       ];
 
-      const docRef = await addDoc(collection(db, 'events'), {
-        createdBy: user.uid,
+      const newEvent = {
+        id: Date.now().toString(),
         title: "Demo: Rahul & Priya's Wedding",
-        images: demoImages,
-        createdAt: serverTimestamp(),
-      });
+        createdAt: new Date().toISOString(),
+        createdBy: user.uid,
+        images: demoImages
+      };
+
+      const updatedEvents = [newEvent, ...events];
+      setEvents(updatedEvents);
+      
+      const allSavedEvents = JSON.parse(localStorage.getItem('lensdrop_events') || '[]');
+      localStorage.setItem('lensdrop_events', JSON.stringify([newEvent, ...allSavedEvents]));
+
       notify.success("Demo Event Created Successfully!");
-      navigate(`/upload/${docRef.id}`);
+      navigate(`/upload/${newEvent.id}`);
     } catch (error) {
       console.error("Error creating demo event:", error);
       notify.error("Failed to create demo event.");
@@ -163,7 +178,7 @@ export function Dashboard() {
     }
   };
 
-  if (authLoading) {
+  if (authLoading || !isMounted) {
     return <Loader />;
   }
 
@@ -282,7 +297,7 @@ export function Dashboard() {
                     <div className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-slate-400 mb-6 w-full">
                       <Calendar className="w-4 h-4 shrink-0" />
                       <span className="truncate">
-                        {event.createdAt?.toDate ? new Date(event.createdAt.toDate()).toLocaleDateString() : 'Just now'}
+                        {event.createdAt ? new Date(event.createdAt).toLocaleDateString() : 'Just now'}
                       </span>
                     </div>
                     

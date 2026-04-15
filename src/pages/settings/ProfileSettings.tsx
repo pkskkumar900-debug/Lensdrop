@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Camera, Save } from 'lucide-react';
@@ -9,11 +9,31 @@ import { db } from '../../firebase';
 
 export function ProfileSettings() {
   const { user } = useAuth();
-  const [displayName, setDisplayName] = useState(user?.displayName || '');
+  const [displayName, setDisplayName] = useState('');
   const [saving, setSaving] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [base64Image, setBase64Image] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+    const savedProfile = localStorage.getItem('lensdrop_user_profile');
+    if (savedProfile) {
+      try {
+        const parsed = JSON.parse(savedProfile);
+        if (parsed.displayName) setDisplayName(parsed.displayName);
+        if (parsed.avatarBase64) {
+          setAvatarPreview(parsed.avatarBase64);
+          setBase64Image(parsed.avatarBase64);
+        }
+      } catch (e) {
+        console.error('Failed to parse saved profile');
+      }
+    } else if (user) {
+      setDisplayName(user.displayName || '');
+    }
+  }, [user]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -22,9 +42,14 @@ export function ProfileSettings() {
         notify.error('Image size should be less than 5MB');
         return;
       }
-      setAvatarFile(file);
-      const previewUrl = URL.createObjectURL(file);
-      setAvatarPreview(previewUrl);
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setBase64Image(base64String);
+        setAvatarPreview(base64String);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -32,23 +57,27 @@ export function ProfileSettings() {
     if (!user) return;
     setSaving(true);
     try {
-      let photoURL = user.photoURL;
-      
-      // In a real app, we would upload the avatarFile to Cloudinary or Firebase Storage here
-      // and get the resulting URL. For this demo, we'll just update the display name.
-      // If we had a real upload, it would look like:
-      // if (avatarFile) { photoURL = await uploadAvatar(avatarFile); }
+      // Save to localStorage
+      const profileData = {
+        displayName,
+        avatarBase64: base64Image
+      };
+      localStorage.setItem('lensdrop_user_profile', JSON.stringify(profileData));
 
-      await updateProfile(user, { displayName, photoURL });
-      await updateDoc(doc(db, 'users', user.uid), { displayName, photoURL });
+      // Also attempt to save to Firebase if possible, but don't block on it for the avatar
+      await updateProfile(user, { displayName });
+      await updateDoc(doc(db, 'users', user.uid), { displayName });
+      
       notify.success('Profile updated successfully');
     } catch (error) {
       console.error('Error updating profile:', error);
-      notify.error('Failed to update profile');
+      notify.error('Failed to update profile in database, but saved locally.');
     } finally {
       setSaving(false);
     }
   };
+
+  if (!isMounted) return null;
 
   return (
     <motion.div 

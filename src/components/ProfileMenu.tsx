@@ -19,7 +19,7 @@ import { SettingsModal, ModalView } from './SettingsModal';
 
 export function ProfileMenu() {
   const { user, logout, isAdmin } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [modalView, setModalView] = useState<ModalView>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -86,7 +86,7 @@ export function ProfileMenu() {
                   </Link>
                 )}
                 <button 
-                  onClick={toggleTheme}
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                   className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                 >
                   <div className="flex items-center gap-3">

@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Github, Linkedin, Instagram, MessageCircle, Mail } from 'lucide-react';
+import { Github, Linkedin, Instagram, MessageCircle, Mail, Menu, Camera } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
@@ -22,6 +23,7 @@ import { SupportSettings } from './pages/settings/SupportSettings';
 
 function AppLayout() {
   const { user } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 text-gray-900 dark:text-slate-50 font-sans selection:bg-indigo-500/30 selection:text-indigo-800 dark:selection:text-indigo-200 relative overflow-x-hidden transition-colors duration-300">
@@ -29,10 +31,26 @@ function AppLayout() {
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 dark:bg-indigo-600/20 blur-[120px] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: '7s' }} />
       <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-500/10 dark:bg-purple-600/20 blur-[120px] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: '11s' }} />
       
-      {user && <Sidebar />}
+      {user && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
       
       <div className={`relative z-10 flex flex-col min-h-screen ${user ? 'md:ml-64' : ''}`}>
         {!user && <Navbar />}
+        
+        {user && (
+          <header className="md:hidden flex items-center justify-between p-4 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-gray-200 dark:border-slate-800 sticky top-0 z-30">
+            <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+              <Camera className="w-6 h-6" />
+              <span className="font-semibold text-xl tracking-tight text-gray-900 dark:text-white">LensDrop</span>
+            </div>
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+          </header>
+        )}
+
         <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
           <Routes>
             <Route path="/" element={<Home />} />

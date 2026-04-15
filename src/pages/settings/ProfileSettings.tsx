@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'motion/react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Camera, Save } from 'lucide-react';
@@ -11,13 +11,36 @@ export function ProfileSettings() {
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [saving, setSaving] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        notify.error('Image size should be less than 5MB');
+        return;
+      }
+      setAvatarFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setAvatarPreview(previewUrl);
+    }
+  };
 
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
     try {
-      await updateProfile(user, { displayName });
-      await updateDoc(doc(db, 'users', user.uid), { displayName });
+      let photoURL = user.photoURL;
+      
+      // In a real app, we would upload the avatarFile to Cloudinary or Firebase Storage here
+      // and get the resulting URL. For this demo, we'll just update the display name.
+      // If we had a real upload, it would look like:
+      // if (avatarFile) { photoURL = await uploadAvatar(avatarFile); }
+
+      await updateProfile(user, { displayName, photoURL });
+      await updateDoc(doc(db, 'users', user.uid), { displayName, photoURL });
       notify.success('Profile updated successfully');
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -40,14 +63,25 @@ export function ProfileSettings() {
         <div className="flex flex-col sm:flex-row items-center gap-8 mb-8">
           <div className="relative group">
             <img 
-              src={user?.photoURL || `https://ui-avatars.com/api/?name=${user?.email}&background=6366f1&color=fff`} 
+              src={avatarPreview || user?.photoURL || `https://ui-avatars.com/api/?name=${user?.email}&background=6366f1&color=fff`} 
               alt="Profile" 
-              className="w-32 h-32 rounded-full border-4 border-white dark:border-slate-800 object-cover shadow-lg"
+              className="w-32 h-32 rounded-full border-4 border-white dark:border-slate-800 object-cover shadow-lg transition-opacity group-hover:opacity-80"
               referrerPolicy="no-referrer"
             />
-            <button className="absolute bottom-0 right-0 bg-indigo-600 text-white p-2.5 rounded-full hover:bg-indigo-700 transition-colors shadow-lg border-2 border-white dark:border-slate-800">
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute bottom-0 right-0 bg-indigo-600 text-white p-2.5 rounded-full hover:bg-indigo-700 transition-colors shadow-lg border-2 border-white dark:border-slate-800"
+              title="Change Avatar"
+            >
               <Camera className="w-5 h-5" />
             </button>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileChange} 
+              accept="image/*" 
+              className="hidden" 
+            />
           </div>
           <div className="flex-1 w-full">
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">

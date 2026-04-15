@@ -7,6 +7,7 @@ import { Users, Calendar, Image as ImageIcon, Search } from 'lucide-react';
 import { motion } from 'motion/react';
 import { notify } from '../lib/toast';
 import { Loader } from '../components/Loader';
+import { ConfirmModal } from '../components/ConfirmModal';
 import { StatsCard } from '../components/admin/StatsCard';
 import { UsersTable } from '../components/admin/UsersTable';
 import { EventsTable } from '../components/admin/EventsTable';
@@ -21,6 +22,10 @@ export function AdminDashboard() {
   
   const [activeTab, setActiveTab] = useState<'users' | 'events' | 'images'>('users');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [eventToDelete, setEventToDelete] = useState<string | null>(null);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [imageToDelete, setImageToDelete] = useState<{eventId: string, image: any} | null>(null);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -58,36 +63,45 @@ export function AdminDashboard() {
     return unsubscribe;
   }, [isAdmin]);
 
-  const handleDeleteEvent = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) return;
+  const handleDeleteEvent = async () => {
+    if (!eventToDelete) return;
     try {
-      await deleteDoc(doc(db, 'events', id));
+      await deleteDoc(doc(db, 'events', eventToDelete));
+      notify.success("Event deleted.");
     } catch (error) {
       console.error("Error deleting event:", error);
       notify.error("Failed to delete event.");
+    } finally {
+      setEventToDelete(null);
     }
   };
 
-  const handleDeleteUser = async (uid: string) => {
-    if (!confirm('Are you sure you want to delete this user record from Firestore? Note: This does not delete their Firebase Auth account.')) return;
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
     try {
-      await deleteDoc(doc(db, 'users', uid));
-      setUsers(users.filter(u => u.uid !== uid));
+      await deleteDoc(doc(db, 'users', userToDelete));
+      setUsers(users.filter(u => u.uid !== userToDelete));
+      notify.success("User deleted.");
     } catch (error) {
       console.error("Error deleting user:", error);
       notify.error("Failed to delete user.");
+    } finally {
+      setUserToDelete(null);
     }
   };
 
-  const handleDeleteImage = async (eventId: string, image: any) => {
-    if (!confirm('Are you sure you want to delete this image?')) return;
+  const handleDeleteImage = async () => {
+    if (!imageToDelete) return;
     try {
-      await updateDoc(doc(db, 'events', eventId), {
-        images: arrayRemove(image)
+      await updateDoc(doc(db, 'events', imageToDelete.eventId), {
+        images: arrayRemove(imageToDelete.image)
       });
+      notify.success("Image deleted.");
     } catch (error) {
       console.error("Error deleting image:", error);
       notify.error("Failed to delete image.");
+    } finally {
+      setImageToDelete(null);
     }
   };
 
@@ -230,10 +244,37 @@ export function AdminDashboard() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        {activeTab === 'users' && <UsersTable users={filteredUsers} onDeleteUser={handleDeleteUser} />}
-        {activeTab === 'events' && <EventsTable events={filteredEvents} onDeleteEvent={handleDeleteEvent} />}
-        {activeTab === 'images' && <ImagesTable images={filteredImages} onDeleteImage={handleDeleteImage} />}
+        {activeTab === 'users' && <UsersTable users={filteredUsers} onDeleteUser={setUserToDelete} />}
+        {activeTab === 'events' && <EventsTable events={filteredEvents} onDeleteEvent={setEventToDelete} />}
+        {activeTab === 'images' && <ImagesTable images={filteredImages} onDeleteImage={(eventId, image) => setImageToDelete({eventId, image})} />}
       </motion.div>
+
+      <ConfirmModal
+        isOpen={!!eventToDelete}
+        title="Delete Event"
+        message="Are you sure you want to delete this event? This action cannot be undone."
+        confirmText="Delete"
+        onConfirm={handleDeleteEvent}
+        onCancel={() => setEventToDelete(null)}
+      />
+
+      <ConfirmModal
+        isOpen={!!userToDelete}
+        title="Delete User"
+        message="Are you sure you want to delete this user record from Firestore? Note: This does not delete their Firebase Auth account."
+        confirmText="Delete"
+        onConfirm={handleDeleteUser}
+        onCancel={() => setUserToDelete(null)}
+      />
+
+      <ConfirmModal
+        isOpen={!!imageToDelete}
+        title="Delete Image"
+        message="Are you sure you want to delete this image?"
+        confirmText="Delete"
+        onConfirm={handleDeleteImage}
+        onCancel={() => setImageToDelete(null)}
+      />
     </motion.div>
   );
 }

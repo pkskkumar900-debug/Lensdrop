@@ -3,14 +3,11 @@ import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp 
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Image as ImageIcon, Calendar, ChevronRight, Sparkles } from 'lucide-react';
+import { Plus, Image as ImageIcon, Calendar, ChevronRight, Sparkles, Download } from 'lucide-react';
 import { motion } from 'motion/react';
 import { QRCodeSVG } from 'qrcode.react';
 import { notify } from '../lib/toast';
 import { Loader } from '../components/Loader';
-
-import { UserProfile } from '../components/UserProfile';
-import { SettingsModal, ModalView } from '../components/SettingsModal';
 
 interface Event {
   id: string;
@@ -25,7 +22,6 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState('');
-  const [modalView, setModalView] = useState<ModalView>(null);
 
   const handleDownloadQR = (e: React.MouseEvent, eventId: string, eventTitle: string) => {
     e.preventDefault();
@@ -181,8 +177,6 @@ export function Dashboard() {
       animate={{ opacity: 1 }}
       className="max-w-5xl mx-auto relative z-10"
     >
-      <UserProfile onOpenSettings={setModalView} />
-      
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 mt-12">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Your Events</h1>
@@ -224,9 +218,8 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <div className="lg:col-span-3">
-          {loading ? (
+      <div className="w-full">
+        {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[1, 2, 3, 4].map(i => (
                 <div key={i} className="bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 h-48 flex flex-col">
@@ -281,36 +274,36 @@ export function Dashboard() {
                 >
                   <Link 
                     to={`/upload/${event.id}`}
-                    className="group bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 hover:shadow-lg hover:shadow-indigo-500/5 hover:border-indigo-400 dark:hover:border-indigo-500/50 transition-all flex flex-col h-full"
+                    className="group bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 hover:shadow-lg hover:shadow-indigo-500/5 hover:border-indigo-400 dark:hover:border-indigo-500/50 transition-all flex flex-col h-full items-center text-center"
                   >
-                    <div className="flex justify-between items-start gap-4 flex-1">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors break-words line-clamp-2">
-                          {event.title}
-                        </h3>
-                        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
-                          <Calendar className="w-4 h-4 shrink-0" />
-                          <span className="truncate">
-                            {event.createdAt?.toDate ? new Date(event.createdAt.toDate()).toLocaleDateString() : 'Just now'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="shrink-0 bg-white p-2 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm group-hover:border-indigo-200 transition-colors flex flex-col items-center gap-2">
-                        <QRCodeSVG 
-                          id={`qr-${event.id}`}
-                          value={`${window.location.origin}/event/${event.id}`} 
-                          size={60} 
-                          level="L" 
-                        />
-                        <button
-                          onClick={(e) => handleDownloadQR(e, event.id, event.title)}
-                          className="text-[10px] font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded w-full text-center transition-colors"
-                        >
-                          Download
-                        </button>
-                      </div>
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors break-words line-clamp-2 w-full">
+                      {event.title}
+                    </h3>
+                    <div className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-slate-400 mb-6 w-full">
+                      <Calendar className="w-4 h-4 shrink-0" />
+                      <span className="truncate">
+                        {event.createdAt?.toDate ? new Date(event.createdAt.toDate()).toLocaleDateString() : 'Just now'}
+                      </span>
                     </div>
-                    <div className="mt-6 pt-4 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between text-indigo-600 dark:text-indigo-400 font-medium text-sm">
+                    
+                    <div className="bg-white p-4 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm group-hover:border-indigo-200 transition-colors mb-4">
+                      <QRCodeSVG 
+                        id={`qr-${event.id}`}
+                        value={`${window.location.origin}/event/${event.id}`} 
+                        size={160} 
+                        level="H" 
+                        includeMargin={true}
+                      />
+                    </div>
+                    
+                    <button
+                      onClick={(e) => handleDownloadQR(e, event.id, event.title)}
+                      className="w-full bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 mb-6"
+                    >
+                      <Download className="w-4 h-4" /> Download QR
+                    </button>
+                    
+                    <div className="mt-auto pt-4 border-t border-gray-100 dark:border-slate-800 w-full flex items-center justify-between text-indigo-600 dark:text-indigo-400 font-medium text-sm">
                       <span>Manage Gallery & QR</span>
                       <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </div>
@@ -318,15 +311,8 @@ export function Dashboard() {
                 </motion.div>
               ))}
             </div>
-          )}
-        </div>
-        
-        <div className="lg:col-span-1">
-          <UserProfile onOpenSettings={setModalView} />
-        </div>
+        )}
       </div>
-      
-      <SettingsModal view={modalView} onClose={() => setModalView(null)} />
     </motion.div>
   );
 }

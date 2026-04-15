@@ -10,6 +10,7 @@ import { ArrowLeft, Trash2, ExternalLink, Image as ImageIcon, MailOpen, CircleCh
 import { motion } from 'motion/react';
 import { notify } from '../lib/toast';
 import { Loader } from '../components/Loader';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 export function EventAdmin() {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +20,7 @@ export function EventAdmin() {
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'gallery' | 'invite'>('gallery');
+  const [photoToDelete, setPhotoToDelete] = useState<any>(null);
 
   useEffect(() => {
     if (!user || !id) return;
@@ -44,15 +46,19 @@ export function EventAdmin() {
     return unsubscribe;
   }, [id, user, navigate]);
 
-  const handleDeletePhoto = async (photo: any) => {
-    if (!confirm('Are you sure you want to remove this photo from the gallery?')) return;
+  const handleDeletePhoto = async () => {
+    if (!photoToDelete) return;
     
     try {
       await updateDoc(doc(db, 'events', id!), {
-        images: arrayRemove(photo)
+        images: arrayRemove(photoToDelete)
       });
+      notify.success('Photo removed');
     } catch (error) {
       console.error("Error deleting photo:", error);
+      notify.error('Failed to remove photo');
+    } finally {
+      setPhotoToDelete(null);
     }
   };
 
@@ -144,7 +150,7 @@ export function EventAdmin() {
                         />
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
-                            onClick={() => handleDeletePhoto(photo)}
+                            onClick={() => setPhotoToDelete(photo)}
                             className="bg-black/50 text-white p-1.5 rounded-full hover:bg-red-500/80 transition-colors backdrop-blur-sm"
                             title="Delete photo"
                           >
@@ -181,6 +187,15 @@ export function EventAdmin() {
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={!!photoToDelete}
+        title="Remove Photo"
+        message="Are you sure you want to remove this photo from the gallery? This action cannot be undone."
+        confirmText="Remove"
+        onConfirm={handleDeletePhoto}
+        onCancel={() => setPhotoToDelete(null)}
+      />
     </motion.div>
   );
 }

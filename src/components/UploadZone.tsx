@@ -66,15 +66,34 @@ export function UploadZone({ eventId }: UploadZoneProps) {
         const uploadResult = await uploadImage(compressedFile);
         
         if (uploadResult) {
-          await updateDoc(doc(db, 'events', eventId), {
-            images: arrayUnion({
-              url: uploadResult.url,
-              public_id: uploadResult.public_id,
-              name: file.name,
-              size: compressedFile.size,
-              uploadedAt: new Date().toISOString()
-            })
-          });
+          const newImage = {
+            url: uploadResult.url,
+            public_id: uploadResult.public_id,
+            name: file.name,
+            size: compressedFile.size,
+            uploadedAt: new Date().toISOString()
+          };
+          
+          try {
+            await updateDoc(doc(db, 'events', eventId), {
+              images: arrayUnion(newImage)
+            });
+          } catch (dbError) {
+            console.error("Firebase update failed, saving to localStorage", dbError);
+            const savedEvents = localStorage.getItem('lensdrop_events');
+            if (savedEvents) {
+              try {
+                const parsedEvents = JSON.parse(savedEvents);
+                const eventIndex = parsedEvents.findIndex((e: any) => e.id === eventId);
+                if (eventIndex !== -1) {
+                  parsedEvents[eventIndex].images = [...(parsedEvents[eventIndex].images || []), newImage];
+                  localStorage.setItem('lensdrop_events', JSON.stringify(parsedEvents));
+                }
+              } catch (e) {
+                console.error('Failed to update local storage', e);
+              }
+            }
+          }
         }
         
         completed++;

@@ -41,20 +41,51 @@ export function EventGallery() {
       return;
     }
 
-    const docRef = doc(db, 'events', id);
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setEvent({ id: docSnap.id, ...docSnap.data() });
+    let unsubscribe = () => {};
+
+    // First check localStorage
+    const savedEvents = localStorage.getItem('lensdrop_events');
+    let localEvent = null;
+    if (savedEvents) {
+      try {
+        const parsedEvents = JSON.parse(savedEvents);
+        localEvent = parsedEvents.find((e: any) => e.id === id);
+      } catch (e) {
+        console.error('Failed to parse local events');
+      }
+    }
+
+    try {
+      const docRef = doc(db, 'events', id);
+      unsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setEvent({ id: docSnap.id, ...docSnap.data() });
+        } else if (localEvent) {
+          setEvent(localEvent);
+        } else {
+          setEvent(null);
+        }
+        setLoading(false);
+      }, (error) => {
+        console.error("Error fetching event:", error);
+        if (localEvent) {
+          setEvent(localEvent);
+        } else {
+          setEvent(null);
+        }
+        setLoading(false);
+      });
+    } catch (error) {
+      console.error("Firebase error:", error);
+      if (localEvent) {
+        setEvent(localEvent);
       } else {
         setEvent(null);
       }
       setLoading(false);
-    }, (error) => {
-      console.error("Error fetching event:", error);
-      setLoading(false);
-    });
+    }
 
-    return unsubscribe;
+    return () => unsubscribe();
   }, [id]);
 
   const photos = event?.images || [];

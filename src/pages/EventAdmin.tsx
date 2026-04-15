@@ -25,25 +25,71 @@ export function EventAdmin() {
   useEffect(() => {
     if (!user || !id) return;
 
-    const docRef = doc(db, 'events', id);
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        if (data.createdBy !== user.uid) {
+    let unsubscribe = () => {};
+
+    // First check localStorage
+    const savedEvents = localStorage.getItem('lensdrop_events');
+    let localEvent = null;
+    if (savedEvents) {
+      try {
+        const parsedEvents = JSON.parse(savedEvents);
+        localEvent = parsedEvents.find((e: any) => e.id === id);
+      } catch (e) {
+        console.error('Failed to parse local events');
+      }
+    }
+
+    // Then try Firebase
+    try {
+      const docRef = doc(db, 'events', id);
+      unsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.createdBy !== user.uid) {
+            navigate('/dashboard');
+            return;
+          }
+          setEvent({ id: docSnap.id, ...data });
+          setLoading(false);
+        } else if (localEvent) {
+          // Fallback to local event if not in Firebase
+          if (localEvent.createdBy !== user.uid) {
+            navigate('/dashboard');
+            return;
+          }
+          setEvent(localEvent);
+          setLoading(false);
+        } else {
+          navigate('/dashboard');
+        }
+      }, (error) => {
+        console.error("Error fetching event from Firebase:", error);
+        if (localEvent) {
+          if (localEvent.createdBy !== user.uid) {
+            navigate('/dashboard');
+            return;
+          }
+          setEvent(localEvent);
+        } else {
+          navigate('/dashboard');
+        }
+        setLoading(false);
+      });
+    } catch (error) {
+      console.error("Firebase initialization error:", error);
+      if (localEvent) {
+        if (localEvent.createdBy !== user.uid) {
           navigate('/dashboard');
           return;
         }
-        setEvent({ id: docSnap.id, ...data });
+        setEvent(localEvent);
       } else {
         navigate('/dashboard');
       }
       setLoading(false);
-    }, (error) => {
-      console.error("Error fetching event:", error);
-      setLoading(false);
-    });
+    }
 
-    return unsubscribe;
+    return () => unsubscribe();
   }, [id, user, navigate]);
 
   const handleDeletePhoto = async () => {
@@ -55,8 +101,29 @@ export function EventAdmin() {
       });
       notify.success('Photo removed');
     } catch (error) {
-      console.error("Error deleting photo:", error);
-      notify.error('Failed to remove photo');
+      console.error("Error deleting photo from Firebase:", error);
+      
+      // Fallback to localStorage
+      const savedEvents = localStorage.getItem('lensdrop_events');
+      if (savedEvents) {
+        try {
+          const parsedEvents = JSON.parse(savedEvents);
+          const eventIndex = parsedEvents.findIndex((e: any) => e.id === id);
+          if (eventIndex !== -1) {
+            parsedEvents[eventIndex].images = parsedEvents[eventIndex].images.filter((img: any) => img.public_id !== photoToDelete.public_id);
+            localStorage.setItem('lensdrop_events', JSON.stringify(parsedEvents));
+            setEvent(parsedEvents[eventIndex]); // Update local state
+            notify.success('Photo removed locally');
+          } else {
+            notify.error('Failed to remove photo');
+          }
+        } catch (e) {
+          console.error('Failed to update local storage', e);
+          notify.error('Failed to remove photo');
+        }
+      } else {
+        notify.error('Failed to remove photo');
+      }
     } finally {
       setPhotoToDelete(null);
     }

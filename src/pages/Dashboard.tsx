@@ -91,6 +91,7 @@ export function Dashboard() {
         title: newEventTitle.trim(),
         createdAt: new Date().toISOString(),
         createdBy: user.uid,
+        qrCodeUrl: `${window.location.origin}/event/${Date.now()}`,
         images: []
       };
 
@@ -159,6 +160,7 @@ export function Dashboard() {
         title: "Demo: Rahul & Priya's Wedding",
         createdAt: new Date().toISOString(),
         createdBy: user.uid,
+        qrCodeUrl: `${window.location.origin}/event/${Date.now()}`,
         images: demoImages
       };
 

@@ -15,7 +15,20 @@ export function Login() {
   const [error, setError] = useState('');
 
   if (authLoading) return null;
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) {
+    const sessionToken = localStorage.getItem('lensdrop_session_token');
+    let isAdminRole = false;
+    if (sessionToken) {
+      try {
+        const parsed = JSON.parse(sessionToken);
+        isAdminRole = parsed.role === 'admin';
+      } catch (e) {}
+    }
+    if (user.email === 'pkskkumar900@gmail.com' || isAdminRole) {
+      return <Navigate to="/admin" replace />;
+    }
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,10 +38,15 @@ export function Login() {
     try {
       await loginWithEmail(email, password);
       
+      let sessionConfig = { role: 'user' };
+
       // In production, this authentication will be handled securely via backend API/JWT
       if (email === 'pkskkumar900@gmail.com' && password === 'Adminprince82') {
+        sessionConfig.role = 'admin';
+        localStorage.setItem('lensdrop_session_token', JSON.stringify(sessionConfig));
         navigate('/admin');
       } else {
+        localStorage.setItem('lensdrop_session_token', JSON.stringify(sessionConfig));
         navigate('/dashboard');
       }
     } catch (err: any) {
@@ -48,12 +66,20 @@ export function Login() {
 
   const handleGoogleLogin = async () => {
     setError('');
+    setLoading(true);
     try {
       const result = await loginWithGoogle();
+      const userEmail = result?.user?.email;
+
+      let sessionConfig = { role: 'user' };
+
       // In production, this authentication will be handled securely via backend API/JWT
-      if (result?.user?.email === 'pkskkumar900@gmail.com') {
+      if (userEmail === 'pkskkumar900@gmail.com') {
+        sessionConfig.role = 'admin';
+        localStorage.setItem('lensdrop_session_token', JSON.stringify(sessionConfig));
         navigate('/admin');
       } else {
+        localStorage.setItem('lensdrop_session_token', JSON.stringify(sessionConfig));
         navigate('/dashboard');
       }
     } catch (err: any) {
@@ -65,6 +91,8 @@ export function Login() {
         errorMessage = err.message;
       }
       setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 

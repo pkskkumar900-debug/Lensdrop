@@ -18,7 +18,20 @@ export function Signup() {
   const [error, setError] = useState('');
 
   if (authLoading) return null;
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) {
+    const sessionToken = localStorage.getItem('lensdrop_session_token');
+    let isAdminRole = false;
+    if (sessionToken) {
+      try {
+        const parsed = JSON.parse(sessionToken);
+        isAdminRole = parsed.role === 'admin';
+      } catch (e) {}
+    }
+    if (user.email === 'pkskkumar900@gmail.com' || isAdminRole) {
+      return <Navigate to="/admin" replace />;
+    }
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +52,16 @@ export function Signup() {
     try {
       await signupWithEmail(email, password);
       // We could also save the fullName to the user profile here, but let's stick to the core auth for now
-      navigate('/dashboard');
+      let sessionConfig = { role: 'user' };
+
+      if (email === 'pkskkumar900@gmail.com') {
+        sessionConfig.role = 'admin';
+        localStorage.setItem('lensdrop_session_token', JSON.stringify(sessionConfig));
+        navigate('/admin');
+      } else {
+        localStorage.setItem('lensdrop_session_token', JSON.stringify(sessionConfig));
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       let errorMessage = 'Registration failed. Please try again.';
       if (err.code === 'auth/email-already-in-use') {
@@ -59,9 +81,22 @@ export function Signup() {
 
   const handleGoogleLogin = async () => {
     setError('');
+    setLoading(true);
     try {
-      await loginWithGoogle();
-      navigate('/dashboard');
+      const result = await loginWithGoogle();
+      const userEmail = result?.user?.email;
+
+      let sessionConfig = { role: 'user' };
+
+      // In production, this authentication will be handled securely via backend API/JWT
+      if (userEmail === 'pkskkumar900@gmail.com') {
+        sessionConfig.role = 'admin';
+        localStorage.setItem('lensdrop_session_token', JSON.stringify(sessionConfig));
+        navigate('/admin');
+      } else {
+        localStorage.setItem('lensdrop_session_token', JSON.stringify(sessionConfig));
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       console.error("Google Auth Error:", err);
       let errorMessage = 'Google sign-in failed. Please try again.';
@@ -71,6 +106,8 @@ export function Signup() {
         errorMessage = err.message;
       }
       setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 

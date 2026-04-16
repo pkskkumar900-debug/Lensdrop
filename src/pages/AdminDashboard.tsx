@@ -5,6 +5,9 @@ import { Users, Calendar, HardDrive, Activity, Search, Eye, ShieldBan, Trash2 } 
 import { motion } from 'motion/react';
 import { notify } from '../lib/toast';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { collection, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { Loader } from '../components/Loader';
 
 export function AdminDashboard() {
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -18,25 +21,25 @@ export function AdminDashboard() {
   useEffect(() => {
     if (!isAdmin) return;
 
-    // Simulate fetching from database by reading from localStorage
-    const savedUsers = JSON.parse(localStorage.getItem('lensdrop_users') || '[]');
-    const savedEvents = JSON.parse(localStorage.getItem('lensdrop_events') || '[]');
-    
-    // If no users in localStorage, add some dummy data for demonstration
-    if (savedUsers.length === 0) {
-      const dummyUsers = [
-        { uid: '1', displayName: 'Alice Smith', email: 'alice@example.com', status: 'Active' },
-        { uid: '2', displayName: 'Bob Jones', email: 'bob@example.com', status: 'Active' },
-        { uid: '3', displayName: 'Charlie Brown', email: 'charlie@example.com', status: 'Banned' },
-      ];
-      localStorage.setItem('lensdrop_users', JSON.stringify(dummyUsers));
-      setUsers(dummyUsers);
-    } else {
-      setUsers(savedUsers);
-    }
-    
-    setEvents(savedEvents);
-    setLoading(false);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const usersSnap = await getDocs(collection(db, 'users'));
+        const usersData = usersSnap.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
+        setUsers(usersData);
+
+        const eventsSnap = await getDocs(collection(db, 'events'));
+        const eventsData = eventsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setEvents(eventsData);
+      } catch (error) {
+        console.error("Error fetching admin data:", error);
+        notify.error("Failed to load dashboard data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [isAdmin]);
 
   const stats = useMemo(() => {
@@ -63,29 +66,47 @@ export function AdminDashboard() {
     );
   }, [users, searchQuery]);
 
-  const handleBanUser = (uid: string) => {
-    const updatedUsers = users.map(u => {
-      if (u.uid === uid) {
-        const newStatus = u.status === 'Banned' ? 'Active' : 'Banned';
-        notify.success(`User ${newStatus === 'Banned' ? 'banned' : 'unbanned'} successfully.`);
-        return { ...u, status: newStatus };
-      }
-      return u;
-    });
-    setUsers(updatedUsers);
-    localStorage.setItem('lensdrop_users', JSON.stringify(updatedUsers));
+  const handleBanUser = async (uid: string) => {
+    const userToUpdate = users.find(u => u.uid === uid);
+    if (!userToUpdate) return;
+    
+    const newStatus = userToUpdate.status === 'Banned' ? 'Active' : 'Banned';
+    
+    try {
+      await updateDoc(doc(db, 'users', uid), { status: newStatus });
+      
+      const updatedUsers = users.map(u => {
+        if (u.uid === uid) {
+          return { ...u, status: newStatus };
+        }
+        return u;
+      });
+      setUsers(updatedUsers);
+      notify.success(`User ${newStatus === 'Banned' ? 'banned' : 'unbanned'} successfully.`);
+    } catch (error) {
+      console.error("Error updating user status:", error);
+      notify.error("Failed to update user status.");
+    }
   };
 
-  const handleDeleteUser = () => {
+  const handleDeleteUser = async () => {
     if (!userToDelete) return;
-    const updatedUsers = users.filter(u => u.uid !== userToDelete.uid);
-    setUsers(updatedUsers);
-    localStorage.setItem('lensdrop_users', JSON.stringify(updatedUsers));
-    notify.success("User deleted successfully.");
-    setUserToDelete(null);
+    
+    try {
+      await deleteDoc(doc(db, 'users', userToDelete.uid));
+      
+      const updatedUsers = users.filter(u => u.uid !== userToDelete.uid);
+      setUsers(updatedUsers);
+      notify.success("User deleted successfully.");
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      notify.error("Failed to delete user.");
+    } finally {
+      setUserToDelete(null);
+    }
   };
 
-  if (authLoading || loading) return null;
+  if (authLoading || loading) return <Loader />;
   if (!user || !isAdmin) return <Navigate to="/dashboard" replace />;
 
   return (

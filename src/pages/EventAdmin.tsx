@@ -34,6 +34,14 @@ export function EventAdmin() {
       try {
         const parsedEvents = JSON.parse(savedEvents);
         localEvent = parsedEvents.find((e: any) => e.id === id);
+        if (localEvent) {
+          if (localEvent.createdBy !== user.uid) {
+            navigate('/dashboard');
+            return;
+          }
+          setEvent(localEvent);
+          setLoading(false);
+        }
       } catch (e) {
         console.error('Failed to parse local events');
       }
@@ -51,39 +59,19 @@ export function EventAdmin() {
           }
           setEvent({ id: docSnap.id, ...data });
           setLoading(false);
-        } else if (localEvent) {
-          // Fallback to local event if not in Firebase
-          if (localEvent.createdBy !== user.uid) {
-            navigate('/dashboard');
-            return;
-          }
-          setEvent(localEvent);
-          setLoading(false);
-        } else {
+        } else if (!localEvent) {
           navigate('/dashboard');
         }
       }, (error) => {
         console.error("Error fetching event from Firebase:", error);
-        if (localEvent) {
-          if (localEvent.createdBy !== user.uid) {
-            navigate('/dashboard');
-            return;
-          }
-          setEvent(localEvent);
-        } else {
+        if (!localEvent) {
           navigate('/dashboard');
         }
         setLoading(false);
       });
     } catch (error) {
       console.error("Firebase initialization error:", error);
-      if (localEvent) {
-        if (localEvent.createdBy !== user.uid) {
-          navigate('/dashboard');
-          return;
-        }
-        setEvent(localEvent);
-      } else {
+      if (!localEvent) {
         navigate('/dashboard');
       }
       setLoading(false);
@@ -188,7 +176,15 @@ export function EventAdmin() {
 
           {activeTab === 'gallery' ? (
             <>
-              <UploadZone eventId={id!} />
+              <UploadZone 
+                eventId={id!} 
+                onUploadComplete={(newImage) => {
+                  setEvent((prev: any) => ({
+                    ...prev,
+                    images: [...(prev?.images || []), newImage]
+                  }));
+                }}
+              />
 
               <div className="mt-12">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">

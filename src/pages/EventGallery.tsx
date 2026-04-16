@@ -50,6 +50,10 @@ export function EventGallery() {
       try {
         const parsedEvents = JSON.parse(savedEvents);
         localEvent = parsedEvents.find((e: any) => e.id === id);
+        if (localEvent) {
+          setEvent(localEvent);
+          setLoading(false);
+        }
       } catch (e) {
         console.error('Failed to parse local events');
       }
@@ -60,26 +64,21 @@ export function EventGallery() {
       unsubscribe = onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
           setEvent({ id: docSnap.id, ...docSnap.data() });
-        } else if (localEvent) {
-          setEvent(localEvent);
-        } else {
+          setLoading(false);
+        } else if (!localEvent) {
           setEvent(null);
+          setLoading(false);
         }
-        setLoading(false);
       }, (error) => {
         console.error("Error fetching event:", error);
-        if (localEvent) {
-          setEvent(localEvent);
-        } else {
+        if (!localEvent) {
           setEvent(null);
         }
         setLoading(false);
       });
     } catch (error) {
       console.error("Firebase error:", error);
-      if (localEvent) {
-        setEvent(localEvent);
-      } else {
+      if (!localEvent) {
         setEvent(null);
       }
       setLoading(false);

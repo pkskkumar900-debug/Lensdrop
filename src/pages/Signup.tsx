@@ -195,11 +195,8 @@ export function Signup() {
             </div>
             <div className="ml-3 text-sm">
               <label htmlFor="terms" className="font-medium text-gray-700 dark:text-slate-300">
-                I accept the{' '}
-                <Link to="#" className="text-indigo-600 dark:text-indigo-400 hover:underline">
-                  Terms and Conditions
-                </Link>{' '}
-                <Link to="#" className="text-indigo-600 dark:text-indigo-400 hover:underline">
+                I accept the Terms and Conditions{' '}
+                <Link to="/settings/legal" className="text-indigo-600 dark:text-indigo-400 hover:underline">
                   (Learn more)
                 </Link>
               </label>

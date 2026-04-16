@@ -24,7 +24,13 @@ export function Login() {
 
     try {
       await loginWithEmail(email, password);
-      navigate('/dashboard');
+      
+      // In production, this authentication will be handled securely via backend API/JWT
+      if (email === 'pkskkumar900@gmail.com' && password === 'Adminprince82') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       let errorMessage = 'Authentication failed. Please try again.';
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
@@ -43,8 +49,13 @@ export function Login() {
   const handleGoogleLogin = async () => {
     setError('');
     try {
-      await loginWithGoogle();
-      navigate('/dashboard');
+      const result = await loginWithGoogle();
+      // In production, this authentication will be handled securely via backend API/JWT
+      if (result?.user?.email === 'pkskkumar900@gmail.com') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       console.error("Google Auth Error:", err);
       let errorMessage = 'Google sign-in failed. Please try again.';

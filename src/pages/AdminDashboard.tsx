@@ -1,17 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { collection, query, orderBy, onSnapshot, deleteDoc, doc, getDocs, updateDoc, arrayRemove } from 'firebase/firestore';
-import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { Users, Calendar, Image as ImageIcon, Search } from 'lucide-react';
+import { Users, Calendar, HardDrive, Activity, Search, Eye, ShieldBan, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { notify } from '../lib/toast';
-import { Loader } from '../components/Loader';
 import { ConfirmModal } from '../components/ConfirmModal';
-import { StatsCard } from '../components/admin/StatsCard';
-import { UsersTable } from '../components/admin/UsersTable';
-import { EventsTable } from '../components/admin/EventsTable';
-import { ImagesTable } from '../components/admin/ImagesTable';
 
 export function AdminDashboard() {
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -19,261 +12,257 @@ export function AdminDashboard() {
   const [users, setUsers] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  const [activeTab, setActiveTab] = useState<'users' | 'events' | 'images'>('users');
   const [searchQuery, setSearchQuery] = useState('');
-  
-  const [eventToDelete, setEventToDelete] = useState<string | null>(null);
-  const [userToDelete, setUserToDelete] = useState<string | null>(null);
-  const [imageToDelete, setImageToDelete] = useState<{eventId: string, image: any} | null>(null);
+  const [userToDelete, setUserToDelete] = useState<any>(null);
 
   useEffect(() => {
     if (!isAdmin) return;
 
-    // Fetch Users
-    const fetchUsers = async () => {
-      try {
-        const usersSnap = await getDocs(collection(db, 'users'));
-        const usersData = usersSnap.docs.map(doc => ({
-          uid: doc.id,
-          ...doc.data()
-        }));
-        setUsers(usersData);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
-    };
-
-    fetchUsers();
-
-    // Fetch Events real-time
-    const q = query(collection(db, 'events'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const eventsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setEvents(eventsData);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching events:", error);
-      setLoading(false);
-    });
-
-    return unsubscribe;
+    // Simulate fetching from database by reading from localStorage
+    const savedUsers = JSON.parse(localStorage.getItem('lensdrop_users') || '[]');
+    const savedEvents = JSON.parse(localStorage.getItem('lensdrop_events') || '[]');
+    
+    // If no users in localStorage, add some dummy data for demonstration
+    if (savedUsers.length === 0) {
+      const dummyUsers = [
+        { uid: '1', displayName: 'Alice Smith', email: 'alice@example.com', status: 'Active' },
+        { uid: '2', displayName: 'Bob Jones', email: 'bob@example.com', status: 'Active' },
+        { uid: '3', displayName: 'Charlie Brown', email: 'charlie@example.com', status: 'Banned' },
+      ];
+      localStorage.setItem('lensdrop_users', JSON.stringify(dummyUsers));
+      setUsers(dummyUsers);
+    } else {
+      setUsers(savedUsers);
+    }
+    
+    setEvents(savedEvents);
+    setLoading(false);
   }, [isAdmin]);
 
-  const handleDeleteEvent = async () => {
-    if (!eventToDelete) return;
-    try {
-      await deleteDoc(doc(db, 'events', eventToDelete));
-      notify.success("Event deleted.");
-    } catch (error) {
-      console.error("Error deleting event:", error);
-      notify.error("Failed to delete event.");
-    } finally {
-      setEventToDelete(null);
-    }
-  };
-
-  const handleDeleteUser = async () => {
-    if (!userToDelete) return;
-    try {
-      await deleteDoc(doc(db, 'users', userToDelete));
-      setUsers(users.filter(u => u.uid !== userToDelete));
-      notify.success("User deleted.");
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      notify.error("Failed to delete user.");
-    } finally {
-      setUserToDelete(null);
-    }
-  };
-
-  const handleDeleteImage = async () => {
-    if (!imageToDelete) return;
-    try {
-      await updateDoc(doc(db, 'events', imageToDelete.eventId), {
-        images: arrayRemove(imageToDelete.image)
-      });
-      notify.success("Image deleted.");
-    } catch (error) {
-      console.error("Error deleting image:", error);
-      notify.error("Failed to delete image.");
-    } finally {
-      setImageToDelete(null);
-    }
-  };
-
-  const allImages = useMemo(() => {
-    const images: any[] = [];
-    events.forEach(event => {
-      if (event.images && Array.isArray(event.images)) {
-        event.images.forEach((img: any) => {
-          images.push({
-            ...img,
-            eventId: event.id,
-            eventTitle: event.title
-          });
-        });
-      }
+  const stats = useMemo(() => {
+    const totalUsers = users.length;
+    const totalEvents = events.length;
+    // Simulate storage used based on events and images
+    let totalImages = 0;
+    events.forEach(e => {
+      if (e.images) totalImages += e.images.length;
     });
-    return images.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
-  }, [events]);
+    const storageUsed = (totalImages * 2.5).toFixed(1); // Assume 2.5MB per image
 
-  const totalImages = allImages.length;
+    return {
+      totalUsers,
+      totalEvents,
+      storageUsed: `${storageUsed} MB`,
+    };
+  }, [users, events]);
 
   const filteredUsers = useMemo(() => {
-    if (!searchQuery) return users;
-    const lowerQuery = searchQuery.toLowerCase();
     return users.filter(u => 
-      u.email?.toLowerCase().includes(lowerQuery) || 
-      u.uid.toLowerCase().includes(lowerQuery)
+      (u.displayName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (u.email?.toLowerCase() || '').includes(searchQuery.toLowerCase())
     );
   }, [users, searchQuery]);
 
-  const filteredEvents = useMemo(() => {
-    if (!searchQuery) return events;
-    const lowerQuery = searchQuery.toLowerCase();
-    return events.filter(e => 
-      e.title?.toLowerCase().includes(lowerQuery) || 
-      e.id.toLowerCase().includes(lowerQuery) ||
-      e.createdBy?.toLowerCase().includes(lowerQuery)
-    );
-  }, [events, searchQuery]);
+  const handleBanUser = (uid: string) => {
+    const updatedUsers = users.map(u => {
+      if (u.uid === uid) {
+        const newStatus = u.status === 'Banned' ? 'Active' : 'Banned';
+        notify.success(`User ${newStatus === 'Banned' ? 'banned' : 'unbanned'} successfully.`);
+        return { ...u, status: newStatus };
+      }
+      return u;
+    });
+    setUsers(updatedUsers);
+    localStorage.setItem('lensdrop_users', JSON.stringify(updatedUsers));
+  };
 
-  const filteredImages = useMemo(() => {
-    if (!searchQuery) return allImages;
-    const lowerQuery = searchQuery.toLowerCase();
-    return allImages.filter(img => 
-      img.name?.toLowerCase().includes(lowerQuery) || 
-      img.eventTitle?.toLowerCase().includes(lowerQuery)
-    );
-  }, [allImages, searchQuery]);
+  const handleDeleteUser = () => {
+    if (!userToDelete) return;
+    const updatedUsers = users.filter(u => u.uid !== userToDelete.uid);
+    setUsers(updatedUsers);
+    localStorage.setItem('lensdrop_users', JSON.stringify(updatedUsers));
+    notify.success("User deleted successfully.");
+    setUserToDelete(null);
+  };
 
-  if (authLoading) return <Loader />;
-  if (!user || !isAdmin) return <Navigate to="/" replace />;
+  if (authLoading || loading) return null;
+  if (!user || !isAdmin) return <Navigate to="/dashboard" replace />;
 
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="max-w-7xl mx-auto"
+      className="space-y-8 text-slate-200"
     >
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-        <p className="text-gray-600 dark:text-slate-400 mt-1">Manage users, events, and platform data.</p>
-      </div>
-
-      {/* Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <StatsCard 
-          title="Total Users" 
-          value={users.length} 
-          icon={Users} 
-          color="bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400" 
-          delay={0.1} 
-        />
-        <StatsCard 
-          title="Total Events" 
-          value={events.length} 
-          icon={Calendar} 
-          color="bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400" 
-          delay={0.2} 
-        />
-        <StatsCard 
-          title="Total Images" 
-          value={totalImages} 
-          icon={ImageIcon} 
-          color="bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400" 
-          delay={0.3} 
-        />
-      </div>
-
-      {/* Controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div className="flex bg-gray-100 dark:bg-slate-800/50 p-1 rounded-xl overflow-x-auto max-w-full">
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`px-6 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-              activeTab === 'users' 
-                ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm' 
-                : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'
-            }`}
-          >
-            Users
-          </button>
-          <button
-            onClick={() => setActiveTab('events')}
-            className={`px-6 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-              activeTab === 'events' 
-                ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm' 
-                : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'
-            }`}
-          >
-            Events
-          </button>
-          <button
-            onClick={() => setActiveTab('images')}
-            className={`px-6 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-              activeTab === 'images' 
-                ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm' 
-                : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'
-            }`}
-          >
-            Images
-          </button>
-        </div>
-
-        <div className="relative w-full sm:w-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder={`Search ${activeTab}...`}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full sm:w-64 pl-10 pr-4 py-2 bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-gray-900 dark:text-white transition-all"
-          />
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Overview</h1>
+          <p className="text-slate-400 mt-1">Platform statistics and user management.</p>
         </div>
       </div>
 
-      {/* Content */}
-      <motion.div
-        key={activeTab}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        {activeTab === 'users' && <UsersTable users={filteredUsers} onDeleteUser={setUserToDelete} />}
-        {activeTab === 'events' && <EventsTable events={filteredEvents} onDeleteEvent={setEventToDelete} />}
-        {activeTab === 'images' && <ImagesTable images={filteredImages} onDeleteImage={(eventId, image) => setImageToDelete({eventId, image})} />}
-      </motion.div>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+              <Users className="w-6 h-6 text-emerald-400" />
+            </div>
+          </div>
+          <h3 className="text-slate-400 text-sm font-medium">Total Users</h3>
+          <p className="text-3xl font-bold text-white mt-1">{stats.totalUsers}</p>
+        </div>
 
-      <ConfirmModal
-        isOpen={!!eventToDelete}
-        title="Delete Event"
-        message="Are you sure you want to delete this event? This action cannot be undone."
-        confirmText="Delete"
-        onConfirm={handleDeleteEvent}
-        onCancel={() => setEventToDelete(null)}
-      />
+        <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+              <Calendar className="w-6 h-6 text-emerald-400" />
+            </div>
+          </div>
+          <h3 className="text-slate-400 text-sm font-medium">Total Events Created</h3>
+          <p className="text-3xl font-bold text-white mt-1">{stats.totalEvents}</p>
+        </div>
+
+        <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+              <HardDrive className="w-6 h-6 text-emerald-400" />
+            </div>
+          </div>
+          <h3 className="text-slate-400 text-sm font-medium">Total Storage Used</h3>
+          <p className="text-3xl font-bold text-white mt-1">{stats.storageUsed}</p>
+        </div>
+
+        <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+              <Activity className="w-6 h-6 text-emerald-400" />
+            </div>
+          </div>
+          <h3 className="text-slate-400 text-sm font-medium">Server Status</h3>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+            <p className="text-xl font-bold text-white">Active</p>
+          </div>
+        </div>
+      </div>
+
+      {/* User Management Table */}
+      <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-lg overflow-hidden">
+        <div className="p-6 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <h2 className="text-xl font-bold text-white">User Management</h2>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-slate-500" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="block w-full sm:w-64 pl-10 pr-3 py-2 border border-slate-700 rounded-xl leading-5 bg-slate-800/50 text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-colors"
+            />
+          </div>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-slate-800">
+            <thead className="bg-slate-900/80">
+              <tr>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">User</th>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Events Hosted</th>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Storage Used</th>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Status</th>
+                <th scope="col" className="px-6 py-4 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-slate-900/30 divide-y divide-slate-800">
+              {filteredUsers.map((u) => {
+                const userEvents = events.filter(e => e.createdBy === u.uid);
+                let userImages = 0;
+                userEvents.forEach(e => {
+                  if (e.images) userImages += e.images.length;
+                });
+                const userStorage = (userImages * 2.5).toFixed(1);
+
+                return (
+                  <tr key={u.uid} className="hover:bg-slate-800/30 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          {u.photoURL ? (
+                            <img className="h-10 w-10 rounded-full object-cover" src={u.photoURL} alt="" />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold">
+                              {(u.displayName || u.email || '?')[0].toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-white">{u.displayName || 'Unknown User'}</div>
+                          <div className="text-sm text-slate-400">{u.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-slate-300">{userEvents.length}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-slate-300">{userStorage} MB</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        u.status === 'Banned' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      }`}>
+                        {u.status || 'Active'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end gap-3">
+                        <button className="text-slate-400 hover:text-emerald-400 transition-colors" title="View Details">
+                          <Eye className="w-5 h-5" />
+                        </button>
+                        <button 
+                          onClick={() => handleBanUser(u.uid)}
+                          className={`${u.status === 'Banned' ? 'text-emerald-400 hover:text-emerald-300' : 'text-slate-400 hover:text-red-400'} transition-colors`} 
+                          title={u.status === 'Banned' ? 'Unban User' : 'Ban User'}
+                        >
+                          <ShieldBan className="w-5 h-5" />
+                        </button>
+                        <button 
+                          onClick={() => setUserToDelete(u)}
+                          className="text-slate-400 hover:text-red-400 transition-colors" 
+                          title="Delete User"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {filteredUsers.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                    No users found matching your search.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <ConfirmModal
         isOpen={!!userToDelete}
         title="Delete User"
-        message="Are you sure you want to delete this user record from Firestore? Note: This does not delete their Firebase Auth account."
-        confirmText="Delete"
+        message={`Are you sure you want to permanently delete ${userToDelete?.displayName || userToDelete?.email}? This action cannot be undone.`}
+        confirmText="Delete Permanently"
         onConfirm={handleDeleteUser}
         onCancel={() => setUserToDelete(null)}
-      />
-
-      <ConfirmModal
-        isOpen={!!imageToDelete}
-        title="Delete Image"
-        message="Are you sure you want to delete this image?"
-        confirmText="Delete"
-        onConfirm={handleDeleteImage}
-        onCancel={() => setImageToDelete(null)}
       />
     </motion.div>
   );

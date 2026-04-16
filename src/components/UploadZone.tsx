@@ -8,9 +8,10 @@ import { notify } from '../lib/toast';
 
 interface UploadZoneProps {
   eventId: string;
+  onUploadComplete?: (newImage: any) => void;
 }
 
-export function UploadZone({ eventId }: UploadZoneProps) {
+export function UploadZone({ eventId, onUploadComplete }: UploadZoneProps) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -78,6 +79,7 @@ export function UploadZone({ eventId }: UploadZoneProps) {
             await updateDoc(doc(db, 'events', eventId), {
               images: arrayUnion(newImage)
             });
+            if (onUploadComplete) onUploadComplete(newImage);
           } catch (dbError) {
             console.error("Firebase update failed, saving to localStorage", dbError);
             const savedEvents = localStorage.getItem('lensdrop_events');
@@ -88,6 +90,7 @@ export function UploadZone({ eventId }: UploadZoneProps) {
                 if (eventIndex !== -1) {
                   parsedEvents[eventIndex].images = [...(parsedEvents[eventIndex].images || []), newImage];
                   localStorage.setItem('lensdrop_events', JSON.stringify(parsedEvents));
+                  if (onUploadComplete) onUploadComplete(newImage);
                 }
               } catch (e) {
                 console.error('Failed to update local storage', e);

@@ -45,8 +45,28 @@ export function InvitationGenerator({ eventId, eventTitle, initialData }: Invita
       });
       notify.success('Invitation saved successfully!');
     } catch (error) {
-      console.error("Error saving invite:", error);
-      notify.error('Failed to save invitation.');
+      console.error("Error saving invite to Firebase:", error);
+      
+      // Fallback to localStorage
+      const savedEvents = localStorage.getItem('lensdrop_events');
+      if (savedEvents) {
+        try {
+          const parsedEvents = JSON.parse(savedEvents);
+          const eventIndex = parsedEvents.findIndex((e: any) => e.id === eventId);
+          if (eventIndex !== -1) {
+            parsedEvents[eventIndex].invite = formData;
+            localStorage.setItem('lensdrop_events', JSON.stringify(parsedEvents));
+            notify.success('Invitation saved locally!');
+          } else {
+            notify.error('Failed to save invitation.');
+          }
+        } catch (e) {
+          console.error('Failed to update local storage', e);
+          notify.error('Failed to save invitation.');
+        }
+      } else {
+        notify.error('Failed to save invitation.');
+      }
     } finally {
       setSaving(false);
     }

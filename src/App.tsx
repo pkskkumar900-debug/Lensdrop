@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Github, Linkedin, Instagram, MessageCircle, Mail, Menu, Camera } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import { Home } from './pages/Home';
@@ -21,43 +21,55 @@ import { AppearanceSettings } from './pages/settings/AppearanceSettings';
 import { LegalSettings } from './pages/settings/LegalSettings';
 import { SupportSettings } from './pages/settings/SupportSettings';
 
+import { AdminSidebar } from './components/AdminSidebar';
+
 function AppLayout() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
   
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 text-gray-900 dark:text-slate-50 font-sans selection:bg-indigo-500/30 selection:text-indigo-800 dark:selection:text-indigo-200 relative overflow-x-hidden transition-colors duration-300">
+    <div className={`min-h-screen ${isAdminRoute ? 'bg-slate-950 text-slate-50' : 'bg-gray-50 dark:bg-slate-950 text-gray-900 dark:text-slate-50'} font-sans selection:bg-indigo-500/30 selection:text-indigo-800 dark:selection:text-indigo-200 relative overflow-x-hidden transition-colors duration-300`}>
       <Toaster position="bottom-right" />
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 dark:bg-indigo-600/20 blur-[120px] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: '7s' }} />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-500/10 dark:bg-purple-600/20 blur-[120px] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: '11s' }} />
+      {!isAdminRoute && (
+        <>
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 dark:bg-indigo-600/20 blur-[120px] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: '7s' }} />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-500/10 dark:bg-purple-600/20 blur-[120px] rounded-full pointer-events-none animate-pulse" style={{ animationDuration: '11s' }} />
+        </>
+      )}
       
-      {user && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
+      {user && !isAdminRoute && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
+      {user && isAdminRoute && isAdmin && <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
       
-      <div className={`relative z-10 flex flex-col min-h-screen ${user ? 'md:ml-64' : ''}`}>
+      <div className={`relative z-10 flex flex-col min-h-screen ${user ? 'md:ml-64' : ''} ${isAdminRoute ? 'md:ml-72' : ''}`}>
         {!user && <Navbar />}
         
         {user && (
-          <header className="md:hidden flex items-center justify-between p-4 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-gray-200 dark:border-slate-800 sticky top-0 z-30">
-            <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+          <header className={`md:hidden flex items-center justify-between p-4 ${isAdminRoute ? 'bg-slate-900/80 border-slate-800' : 'bg-white/80 dark:bg-slate-950/80 border-gray-200 dark:border-slate-800'} backdrop-blur-xl border-b sticky top-0 z-30`}>
+            <div className={`flex items-center gap-2 ${isAdminRoute ? 'text-emerald-400' : 'text-indigo-600 dark:text-indigo-400'}`}>
               <Camera className="w-6 h-6" />
-              <span className="font-semibold text-xl tracking-tight text-gray-900 dark:text-white">LensDrop</span>
+              <span className={`font-semibold text-xl tracking-tight ${isAdminRoute ? 'text-white' : 'text-gray-900 dark:text-white'}`}>LensDrop</span>
             </div>
             <button 
               onClick={() => setIsSidebarOpen(true)}
-              className="p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              className={`p-2 rounded-lg transition-colors ${isAdminRoute ? 'text-slate-300 hover:bg-slate-800' : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800'}`}
             >
               <Menu className="w-6 h-6" />
             </button>
           </header>
         )}
 
-        <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <main className={`flex-grow ${isAdminRoute ? 'max-w-[1600px]' : 'max-w-7xl'} mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full`}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<AdminDashboard />} />
+            <Route path="/admin/events" element={<AdminDashboard />} />
+            <Route path="/admin/settings" element={<AdminDashboard />} />
             <Route path="/upload/:id" element={<EventAdmin />} />
             <Route path="/event/:id" element={<EventGallery />} />
             {/* Settings Routes */}

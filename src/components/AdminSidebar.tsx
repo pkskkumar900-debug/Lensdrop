@@ -24,7 +24,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   };
 
   const menuItems = [
-    { icon: LayoutDashboard, label: 'Overview', path: '/admin' },
+    { icon: LayoutDashboard, label: 'Overview', path: '/admin/dashboard' },
     { icon: Users, label: 'Manage Users', path: '/admin/users' },
     { icon: Calendar, label: 'Platform Events', path: '/admin/events' },
     { icon: Settings, label: 'System Settings', path: '/admin/settings' },
@@ -51,7 +51,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         className="fixed top-0 left-0 h-screen w-72 bg-slate-900 border-r border-emerald-900/30 z-50 md:translate-x-0 flex flex-col"
       >
         <div className="p-6 border-b border-emerald-900/30">
-          <Link to="/admin" className="flex items-center gap-3" onClick={onClose}>
+          <Link to="/admin/dashboard" className="flex items-center gap-3" onClick={onClose}>
             <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center">
               <ShieldCheck className="w-6 h-6 text-emerald-400" />
             </div>

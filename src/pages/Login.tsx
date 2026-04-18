@@ -25,7 +25,7 @@ export function Login() {
       } catch (e) {}
     }
     if (user.email === 'pkskkumar900@gmail.com' || isAdminRole) {
-      return <Navigate to="/admin" replace />;
+      return <Navigate to="/admin/dashboard" replace />;
     }
     return <Navigate to="/dashboard" replace />;
   }
@@ -44,7 +44,7 @@ export function Login() {
       if (email === 'pkskkumar900@gmail.com' && password === 'Adminprince82') {
         sessionConfig.role = 'admin';
         localStorage.setItem('lensdrop_session_token', JSON.stringify(sessionConfig));
-        navigate('/admin');
+        navigate('/admin/dashboard');
       } else {
         localStorage.setItem('lensdrop_session_token', JSON.stringify(sessionConfig));
         navigate('/dashboard');
@@ -77,7 +77,7 @@ export function Login() {
       if (userEmail === 'pkskkumar900@gmail.com') {
         sessionConfig.role = 'admin';
         localStorage.setItem('lensdrop_session_token', JSON.stringify(sessionConfig));
-        navigate('/admin');
+        navigate('/admin/dashboard');
       } else {
         localStorage.setItem('lensdrop_session_token', JSON.stringify(sessionConfig));
         navigate('/dashboard');

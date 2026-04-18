@@ -23,6 +23,10 @@ import { SupportSettings } from './pages/settings/SupportSettings';
 
 import { AdminSidebar } from './components/AdminSidebar';
 
+import { AdminEvents } from './pages/admin/AdminEvents';
+import { AdminUsers } from './pages/admin/AdminUsers';
+import { AdminSettings } from './pages/admin/AdminSettings';
+
 function AppLayout() {
   const { user, isAdmin } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -66,10 +70,11 @@ function AppLayout() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/users" element={<AdminDashboard />} />
-            <Route path="/admin/events" element={<AdminDashboard />} />
-            <Route path="/admin/settings" element={<AdminDashboard />} />
+            <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/events" element={<AdminEvents />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="/upload/:id" element={<EventAdmin />} />
             <Route path="/event/:id" element={<EventGallery />} />
             {/* Settings Routes */}
